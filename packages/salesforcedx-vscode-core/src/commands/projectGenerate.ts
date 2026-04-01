@@ -63,14 +63,18 @@ class LibraryProjectGenerateExecutor extends LibraryBaseTemplateCommand<ProjectN
       ns: '',
       loginurl: 'https://login.salesforce.com',
       defaultpackagedir: 'force-app',
-      manifest: this.options.isProjectWithManifest
+      manifest: this.options.isProjectWithManifest,
+      lwcLanguage: data.lwcLanguage
     };
-    this.telemetryProperties = { projectTemplate: data.projectTemplate };
+    this.telemetryProperties = {
+      projectTemplate: data.projectTemplate,
+      lwcLanguage: data.lwcLanguage ?? 'not_specified'
+    };
     return templateOptions;
   }
 }
 
-type ProjectNameAndPathAndTemplate = ProjectName & ProjectURI & { projectTemplate: ProjectTemplate };
+type ProjectNameAndPathAndTemplate = ProjectName & ProjectURI & { projectTemplate: ProjectTemplate } & LwcLanguage;
 
 type ProjectURI = {
   projectUri: string;
@@ -80,7 +84,18 @@ type ProjectName = {
   projectName: string;
 };
 
-export type ProjectTemplate = 'standard' | 'empty' | 'analytics' | 'reactb2e' | 'reactb2x' | 'nativemobile' | 'agent';
+type LwcLanguage = {
+  lwcLanguage?: 'javascript' | 'typescript';
+};
+
+export type ProjectTemplate =
+  | 'standard'
+  | 'empty'
+  | 'analytics'
+  | 'reactexternalapp'
+  | 'reactinternalapp'
+  | 'nativemobile'
+  | 'agent';
 
 class SelectProjectTemplate implements ParametersGatherer<{ projectTemplate: ProjectTemplate }> {
   private readonly initialTemplate?: ProjectTemplate;
@@ -124,10 +139,10 @@ class SelectProjectTemplate implements ParametersGatherer<{ projectTemplate: Pro
         projectTemplate = 'analytics';
         break;
       case nls.localize('project_generate_react_b2e_template_display_text'):
-        projectTemplate = 'reactb2e';
+        projectTemplate = 'reactinternalapp';
         break;
       case nls.localize('project_generate_react_b2x_template_display_text'):
-        projectTemplate = 'reactb2x';
+        projectTemplate = 'reactexternalapp';
         break;
       case nls.localize('project_generate_agent_template_display_text'):
         projectTemplate = 'agent';
@@ -181,6 +196,45 @@ class SelectProjectFolder implements ParametersGatherer<ProjectURI> {
   }
 }
 
+class SelectLwcLanguage implements ParametersGatherer<LwcLanguage> {
+  private readonly initialLwcLanguage?: 'javascript' | 'typescript';
+
+  constructor(initialLwcLanguage?: 'javascript' | 'typescript') {
+    this.initialLwcLanguage = initialLwcLanguage;
+  }
+
+  public async gather(): Promise<CancelResponse | ContinueResponse<LwcLanguage>> {
+    // If language was provided as argument, use it
+    if (this.initialLwcLanguage !== undefined) {
+      return { type: 'CONTINUE', data: { lwcLanguage: this.initialLwcLanguage } };
+    }
+
+    // Prompt user to select language
+    const languageItems: vscode.QuickPickItem[] = [
+      {
+        label: nls.localize('javascript_language_option'),
+        description: nls.localize('javascript_language_description')
+      },
+      {
+        label: nls.localize('typescript_language_option'),
+        description: nls.localize('typescript_language_description')
+      }
+    ];
+
+    const selection = await vscode.window.showQuickPick(languageItems, {
+      placeHolder: nls.localize('select_lwc_language_prompt')
+    });
+
+    if (!selection) {
+      return { type: 'CANCEL' };
+    }
+
+    const lwcLanguage =
+      selection.label === nls.localize('typescript_language_option') ? 'typescript' : 'javascript';
+    return { type: 'CONTINUE', data: { lwcLanguage } };
+  }
+}
+
 class PathExistsChecker implements PostconditionChecker<ProjectNameAndPathAndTemplate> {
   public async check(
     inputs: ContinueResponse<ProjectNameAndPathAndTemplate> | CancelResponse
@@ -207,15 +261,17 @@ const workspaceChecker = new EmptyPreChecker();
 const pathExistsChecker = new PathExistsChecker();
 
 /** Optional args when invoking Create Project; when provided, the corresponding prompt is skipped. */
-type ProjectGenerateArgs = {
+export type ProjectGenerateArgs = {
   projectTemplate?: ProjectTemplate;
   projectName?: string;
   projectUri?: string;
+  lwcLanguage?: 'javascript' | 'typescript';
 };
 
 const buildParameterGatherer = (args?: ProjectGenerateArgs) =>
   new CompositeParametersGatherer<ProjectNameAndPathAndTemplate>(
     new SelectProjectTemplate(args?.projectTemplate),
+    new SelectLwcLanguage(args?.lwcLanguage),
     new SelectProjectName(undefined, args?.projectName),
     new SelectProjectFolder(args?.projectUri)
   );

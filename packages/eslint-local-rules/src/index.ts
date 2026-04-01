@@ -22,8 +22,10 @@ import { packageJsonCommandRefs } from './packageJsonCommandRefs';
 import { packageJsonExtensionIcon } from './packageJsonExtensionIcon';
 import { packageJsonI18nDescriptions } from './packageJsonI18nDescriptions';
 import { packageJsonIconPaths } from './packageJsonIconPaths';
+import { packageJsonSalesforceDepVersions } from './packageJsonSalesforceDepVersions';
 import { packageJsonViewRefs } from './packageJsonViewRefs';
 import { requireEffectFnSpanName } from './requireEffectFnSpanName';
+import { vscodeignoreContributesConflict } from './vscodeignoreContributesConflict';
 import { vscodeignoreRequiredPatterns } from './vscodeignoreRequiredPatterns';
 import { vscodeignoreTextProcessor } from './vscodeignoreTextProcessor';
 
@@ -50,7 +52,9 @@ const plugin = {
     'package-json-extension-icon': packageJsonExtensionIcon,
     'package-json-icon-paths': packageJsonIconPaths,
     'package-json-command-refs': packageJsonCommandRefs,
+    'package-json-salesforce-dep-versions': packageJsonSalesforceDepVersions,
     'package-json-view-refs': packageJsonViewRefs,
+    'vscodeignore-contributes-conflict': vscodeignoreContributesConflict,
     'vscodeignore-required-patterns': vscodeignoreRequiredPatterns
   }
 };

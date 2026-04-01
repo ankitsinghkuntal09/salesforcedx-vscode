@@ -1,49 +1,55 @@
-# 66.3.1 - March 27, 2026
+# 66.4.2 - March 31, 2026
 
 ## Added
 
+#### salesforcedx-aura-language-server
+
+#### salesforcedx-lightning-lsp-common
+
+#### salesforcedx-lwc-language-server
+
+#### salesforcedx-vscode-lightning
+
+#### salesforcedx-vscode-lwc
+
+- We replaced LWC and Aura server-ready popup notifications with a shared custom ready notification and in-editor language status items. ([PR #7054](https://github.com/forcedotcom/salesforcedx-vscode/pull/7054))
+
 #### salesforcedx-vscode-core
 
-- Apex class creation now includes template selection, so developers can choose a starter pattern at creation time instead of manually editing generated files after creation. ([PR #7023](https://github.com/forcedotcom/salesforcedx-vscode/pull/7023))
+- We added `defaultLwcLanguage` as a valid key to the sfdx-project.json schema. ([PR #7109](https://github.com/forcedotcom/salesforcedx-vscode/pull/7109))
 
-- Added support for creating agent project templates to streamline Agentforce project setup and reduce manual project scaffolding steps. ([PR #7027](https://github.com/forcedotcom/salesforcedx-vscode/pull/7027))
-
-#### salesforcedx-vscode-soql
-
-- Query Plan is now available in the SOQL extension text editor view, making it easier to inspect query cost and optimize performance without leaving the editor. ([PR #7013](https://github.com/forcedotcom/salesforcedx-vscode/pull/7013))
-
-## Fixed
-
-#### salesforcedx-vscode
+- We renamed `WebApplication` to `UiBundle` for the **React External App** and **React Internal App** templates in **SFDX: Create Project**. ([PR #7100](https://github.com/forcedotcom/salesforcedx-vscode/pull/7100))
 
 #### salesforcedx-vscode-expanded
 
-- Added the Agentforce DX extension to both the Salesforce Extension Pack and the Salesforce Extension Pack (Expanded) so Agentforce capabilities are available as part of the packaged experience. ([PR #7003](https://github.com/forcedotcom/salesforcedx-vscode/pull/7003))
+- We added the **Salesforce Live Preview** extension to the Salesforce Extension Pack (Expanded), enabling developers to preview Lightning Web Components directly in VS Code with live updates on save. ([PR #7058](https://github.com/forcedotcom/salesforcedx-vscode/pull/7058))
 
-#### salesforcedx-vscode-apex
+#### salesforcedx-vscode-soql
 
-- Added defensive Apex Language Server shutdown handling to prevent orphaned background processes during extension restart or deactivation. ([PR #7031](https://github.com/forcedotcom/salesforcedx-vscode/pull/7031))
+- We added a "Run Query" code lens in `.soql` files and a new command **SFDX: Execute SOQL Query with Current File** in the command palette; the previous **SFDX: Execute SOQL Query...** command has been removed. ([PR #7089](https://github.com/forcedotcom/salesforcedx-vscode/pull/7089))
 
-#### salesforcedx-vscode-apex-testing
+- We added a "Get Query Plan" button to the SOQL Builder UI. ([PR #7094](https://github.com/forcedotcom/salesforcedx-vscode/pull/7094))
 
-- Added a guided VS Code walkthrough for Apex Test Explorer to help new users discover and use core testing workflows faster W-21655739 ([PR #7017](https://github.com/forcedotcom/salesforcedx-vscode/pull/7017))
+## Fixed
 
-- Fixed Apex testing extension test suite membership for duplicate class names to avoid ambiguous class resolution. ([PR #7016](https://github.com/forcedotcom/salesforcedx-vscode/pull/7016))
+#### salesforcedx-lightning-lsp-common
 
-- Improved Apex testing extension error messaging with clearer guidance to help users diagnose and recover from common failures. ([PR #7005](https://github.com/forcedotcom/salesforcedx-vscode/pull/7005))
+- We fixed a bug where `jsconfig.json` files were repeatedly modified with duplicate lines on VS Code startup. ([PR #7087](https://github.com/forcedotcom/salesforcedx-vscode/pull/7087), [ISSUE #7084](https://github.com/forcedotcom/salesforcedx-vscode/issues/7084))
+
+#### salesforcedx-aura-language-server
+
+#### salesforcedx-lwc-language-server
+
+#### salesforcedx-vscode-lwc
+
+- We fixed a bug where changes to `CustomLabels.labels-meta.xml` were not reflected in `.sfdx/typings/lwc/customlabels.d.ts`. ([PR #7065](https://github.com/forcedotcom/salesforcedx-vscode/pull/7065))
 
 #### salesforcedx-vscode-core
 
-- Added a quick pick option for agent project templates so template choice is surfaced directly in the command flow. ([PR #7045](https://github.com/forcedotcom/salesforcedx-vscode/pull/7045))
+- We made some changes under the hood. ([PR #7107](https://github.com/forcedotcom/salesforcedx-vscode/pull/7107))
 
-- Fixed issues in org logout, alias management, and org picker interactions to improve org lifecycle reliability and day-to-day UX. ([PR #6992](https://github.com/forcedotcom/salesforcedx-vscode/pull/6992))
+- We fixed a bug where source path-based deploy/retrieve ignored the `sourceApiVersion` set in sfdx-project.json. ([PR #7106](https://github.com/forcedotcom/salesforcedx-vscode/pull/7106))
 
-- Made changes under the hood to catch up with the latest SDR library changes for compatibility and stability improvements. ([PR #7020](https://github.com/forcedotcom/salesforcedx-vscode/pull/7020))
+- We fixed a bug where `_` in Apex test method names were incorrectly rendered as `\_`. ([PR #7091](https://github.com/forcedotcom/salesforcedx-vscode/pull/7091), [ISSUE #7075](https://github.com/forcedotcom/salesforcedx-vscode/issues/7075))
 
-#### salesforcedx-vscode-metadata
-
-- Updated command visibility so LWC commands are not shown when no Salesforce project is open, reducing confusion and invalid command execution paths. ([PR #7024](https://github.com/forcedotcom/salesforcedx-vscode/pull/7024))
-
-#### salesforcedx-vscode-org
-
-- Added clearer org auth guidance for port `1717` scenarios to help users recover from local auth flow issues more quickly. ([PR #7066](https://github.com/forcedotcom/salesforcedx-vscode/pull/7066))
+- We fixed a bug where the `.sfdx` folder could be created outside a Salesforce project during extension startup. ([PR #7095](https://github.com/forcedotcom/salesforcedx-vscode/pull/7095))

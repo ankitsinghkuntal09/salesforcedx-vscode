@@ -75,6 +75,8 @@ The Salesforce Extension Pack (Expanded) installs these Salesforce-developed ext
   This extension (`salesforcedx-einstein-gpt`) uses generative AI to make Salesforce development in Visual Studio Code richer with features such as a Dev Assistant that helps with writing, documenting, and understanding code. It also provides inline autocompletion, and test case generation for Apex and LWC code.
 - [Salesforce Code Analyzer](https://marketplace.visualstudio.com/items?itemName=salesforce.sfdx-code-analyzer-vscode)
   This extension (`sfdx-code-analyzer-vscode`) scans your code using multiple rule engines to produce lists of violations that you can use to improve your code. v5 also includes all the functionality of the ESLint and Apex PMD extensions. Now, the Salesforce Code Analyzer extension statically analyzes both your Apex and JavaScript code to quickly find problems.
+- [Salesforce Live Preview](https://marketplace.visualstudio.com/items?itemName=salesforce.salesforcedx-vscode-ui-preview)
+  This extension (`salesforcedx-vscode-ui-preview`) enables you to preview Lightning Web Components directly within VS Code with automatic updates on save, allowing you to iterate quickly without deploying code.
 - [Salesforce Apex Language Server (Typescript)](https://marketplace.visualstudio.com/items?itemName=salesforce.apex-language-server-extension)
   This extension (`apex-language-server-extension`) provides the Apex Language Server for syntax analysis and IntelliSense.
 
@@ -83,6 +85,7 @@ It also includes the following community-built extensions.
 - [Apex Log Analyzer](https://marketplace.visualstudio.com/items?itemName=financialforce.lana) is an analyzer for Salesforce debug logs aimed at making performance analysis much easier and quicker. You may also find it generally useful for quickly understanding how your code is executing.
 - [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) is an opinionated code formatter. It enforces a consistent style by parsing your code and re-printing it with its own rules that take the maximum line length into account, wrapping code when necessary.
 - [XML](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-xml) provides support for creating and editing XML documents.
+- [GraphQL Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=GraphQL.vscode-graphql-syntax) provides syntax highlighting for GraphQL files.
 
 ---
 

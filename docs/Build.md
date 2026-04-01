@@ -34,7 +34,7 @@ When you add a dependency, run the bundling process to make sure that your dep i
 
 **Web:** [esbuild-plugin-copy](https://www.npmjs.com/package/esbuild-plugin-copy) for static assets; `globbyOptions: { dot: true }` when copying templates with dot files.
 
-**Web:** Manifest for extension assets — `vscode.workspace.fs.readDirectory` not supported on HTTPS extension URIs. Build-time manifest (e.g. services `generateTemplatesManifest`) + runtime `readFile` per path. See [templateService.ts](../packages/salesforcedx-vscode-services/src/core/templateService.ts).
+**Web:** Manifest for extension assets — `vscode.workspace.fs.readDirectory` not supported on HTTPS extension URIs. Build-time manifest (e.g. services `generateTemplatesManifest`) + runtime `readFile` per path. Services template hydration runs once (`Effect.once`); templates root is memoized (`Effect.cached`). See [templateService.ts](../packages/salesforcedx-vscode-services/src/core/templateService.ts).
 
 **ESBUILD_PLATFORM:** Bundle-time define (web.mjs injects `'web'` or `'node'`). Not a runtime check — value baked in at bundle; dead branches tree-shaken. Examples: [connectionService](../packages/salesforcedx-vscode-services/src/core/connectionService.ts), [templateService](../packages/salesforcedx-vscode-services/src/core/templateService.ts), [soql LSP client](../packages/salesforcedx-vscode-soql/src/lspClient/client.ts).
 
@@ -107,7 +107,7 @@ Examples: [org-browser](../packages/salesforcedx-vscode-org-browser/esbuild.conf
 
 You'll need a `.vscodeignore` file (to keep unwanted code out of the package).
 
-**.vscodeignore:** exclude out/, src/, test/, node_modules, **/\*.map, build configs, `../../**`, `../\*\*`. Examples: [services](../packages/salesforcedx-vscode-services/.vscodeignore), [soql](../packages/salesforcedx-vscode-soql/.vscodeignore).
+**.vscodeignore:** exclude out/, src/, test/, **/\*.map, build configs, `../../**`, `../\*\*`. For `node_modules` handling, follow each package's lint/profile configuration (including any ESLint exceptions) instead of forcing one pattern across all extensions. Examples: [services](../packages/salesforcedx-vscode-services/.vscodeignore), [soql](../packages/salesforcedx-vscode-soql/.vscodeignore), [lwc](../packages/salesforcedx-vscode-lwc/.vscodeignore).
 
 **Resources (principle):** Anchor all runtime resource resolution at the extension root (where package.json lives). Use `extensionContext.extensionUri` + `Utils.joinPath` — never `__dirname` or paths relative to the entry file. That way it doesn't matter whether the entry is `dist/index.js` or `dist/web/index.js`; the extension root is the same. `asAbsolutePath` for Node-only paths (e.g. LSP server module) — **desktop only.**
 

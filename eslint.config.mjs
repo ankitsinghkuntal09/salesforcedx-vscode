@@ -352,7 +352,10 @@ export default [
       'import/no-empty-named-blocks': 'error',
       'import/newline-after-import': 'error',
       'import/no-cycle': 'error',
-      'import/no-extraneous-dependencies': ['error', { devDependencies: ['**/test/**', '**/__tests__/**', '**/scripts/**'] }],
+      'import/no-extraneous-dependencies': [
+        'error',
+        { devDependencies: ['**/test/**', '**/__tests__/**', '**/scripts/**'] }
+      ],
       'import/order': [
         'error',
         {
@@ -721,17 +724,20 @@ export default [
       'local/package-json-extension-icon': 'error',
       'local/package-json-icon-paths': 'error',
       'local/package-json-command-refs': 'error',
-      'local/package-json-view-refs': 'error'
+      'local/package-json-view-refs': 'error',
+      'local/package-json-salesforce-dep-versions': 'error'
     }
   },
   {
     files: ['packages/*/.vscodeignore'],
+    ignores: ['packages/salesforcedx-vscode-lwc/.vscodeignore'],
     plugins: {
       local: localPlugin
     },
     processor: 'local/vscodeignoreText',
     rules: {
-      'local/vscodeignore-required-patterns': 'error'
+      'local/vscodeignore-required-patterns': 'error',
+      'local/vscodeignore-contributes-conflict': 'error'
     }
   },
   eslintConfigPrettier

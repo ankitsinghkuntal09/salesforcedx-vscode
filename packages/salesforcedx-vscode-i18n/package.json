@@ -1,6 +1,7 @@
 {
   "name": "@salesforce/vscode-i18n",
-  "version": "66.4.2",
+  "version": "66.7.1",
+  "versionedIndependently": true,
   "description": "Internationalization (i18n) library for Salesforce VS Code extensions",
   "author": "Salesforce",
   "license": "BSD-3-Clause",
@@ -15,14 +16,23 @@
   "main": "out/src/index.js",
   "types": "out/src/index.d.ts",
   "exports": {
-    ".": "./out/src/index.js",
-    "./tsPlugin": "./out/src/hover/tsPlugin.js"
+    ".": {
+      "types": "./out/src/index.d.ts",
+      "default": "./out/src/index.js"
+    },
+    "./tsPlugin": {
+      "types": "./out/src/hover/tsPlugin.d.ts",
+      "default": "./out/src/hover/tsPlugin.js"
+    }
   },
   "files": [
     "tsPlugin.js",
-    "out/**/*.js",
-    "out/**/*.d.ts",
-    "out/**/*.d.ts.map"
+    "out/src/**/*.js",
+    "out/src/**/*.js.map",
+    "out/src/**/*.d.ts",
+    "out/src/**/*.d.ts.map",
+    "LICENSE.txt",
+    "README.md"
   ],
   "publishConfig": {
     "access": "public"
@@ -32,31 +42,40 @@
     "lint": "wireit",
     "check:circular-deps": "wireit",
     "clean": "shx rm -rf node_modules out dist coverage .wireit .eslintcache .circular-deps.json",
-    "test": "wireit"
+    "test": "wireit",
+    "test:compile": "wireit"
   },
   "wireit": {
     "compile": {
-      "command": "tsc --build --pretty",
+      "command": "tsc --pretty",
       "clean": "if-file-deleted",
       "files": [
         "src/**/*.ts",
-        "test/**/*.ts",
         "tsconfig.json",
         "../../tsconfig.common.json",
         "package.json"
       ],
       "output": [
-        "out/**",
-        "tsconfig.tsbuildinfo"
+        "out/**"
       ]
     },
-    "test": {
-      "command": "jest --coverage",
+    "test:compile": {
+      "command": "tsc -p test/tsconfig.json",
       "dependencies": [
         "compile"
       ],
       "files": [
-        "src/**/*.ts",
+        "test/**/*.ts",
+        "test/tsconfig.json"
+      ],
+      "output": []
+    },
+    "test": {
+      "command": "jest",
+      "dependencies": [
+        "test:compile"
+      ],
+      "files": [
         "test/**/*.ts",
         "jest.config.js",
         "../../config/jest.base.config.js"
@@ -69,7 +88,8 @@
       "command": "eslint --color --cache --cache-location .eslintcache .",
       "dependencies": [
         "check:circular-deps",
-        "../eslint-local-rules:compile"
+        "../eslint-local-rules:compile",
+        "compile"
       ],
       "files": [
         "src/**/*.ts",

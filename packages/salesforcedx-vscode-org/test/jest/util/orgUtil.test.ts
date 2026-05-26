@@ -22,8 +22,14 @@ import * as Layer from 'effect/Layer';
 import * as SubscriptionRef from 'effect/SubscriptionRef';
 import * as vscode from 'vscode';
 import { channelService } from '../../../src/channels';
+import { resetOrgRuntimeForTesting, setAllServicesLayer } from '../../../src/extensionProvider';
+import * as extensionProvider from '../../../src/extensionProvider';
 import { nls } from '../../../src/messages';
-import { checkForSoonToBeExpiredOrgs, setTargetOrgOrAlias } from '../../../src/util/orgUtil';
+import {
+  checkForSoonToBeExpiredOrgs,
+  setTargetOrgOrAlias,
+  updateConfigAndStateAggregators
+} from '../../../src/util/orgUtil';
 
 describe('orgUtil tests', () => {
   let showWarningMessageSpy: jest.SpyInstance;
@@ -197,6 +203,7 @@ describe('orgUtil tests', () => {
     expect(showWarningMessageSpy).toHaveBeenCalled();
     expect(appendLineSpy).toHaveBeenCalled();
     expect(appendLineSpy.mock.calls[0][0]).toContain(orgName1);
+    expect(appendLineSpy.mock.calls[0][0]).toContain('foo');
     expect(showChannelOutputSpy).toHaveBeenCalled();
   });
 
@@ -248,7 +255,9 @@ describe('orgUtil tests', () => {
     expect(showWarningMessageSpy).toHaveBeenCalled();
     expect(appendLineSpy).toHaveBeenCalled();
     expect(appendLineSpy.mock.calls[0][0]).toContain(orgName1);
+    expect(appendLineSpy.mock.calls[0][0]).toContain('foo');
     expect(appendLineSpy.mock.calls[0][0]).toContain(orgName2);
+    expect(appendLineSpy.mock.calls[0][0]).toContain('bar');
     expect(showChannelOutputSpy).toHaveBeenCalled();
   });
 
@@ -337,6 +346,9 @@ describe('testing setTargetOrgOrAlias', () => {
   let stateAggregatorClearInstanceMock: jest.SpyInstance;
 
   beforeEach(() => {
+    jest.spyOn(extensionProvider, 'getOrgRuntime').mockReturnValue({
+      runPromise: jest.fn().mockResolvedValue(undefined)
+    } as unknown as ReturnType<typeof extensionProvider.getOrgRuntime>);
     workspacePathStub = jest.spyOn(workspaceUtils, 'getRootWorkspacePath').mockReturnValue(fakeWorkspace);
     jest.spyOn(process, 'cwd').mockReturnValue(fakeOriginalDirectory);
     setMock = jest.fn();
@@ -384,5 +396,67 @@ describe('testing setTargetOrgOrAlias', () => {
 
     expect(writeCallOrder).toBeLessThan(reloadCallOrder);
     expect(reloadCallOrder).toBeLessThan(clearInstanceCallOrder);
+  });
+});
+
+describe('updateConfigAndStateAggregators', () => {
+  let getConnectionMock: jest.Mock;
+  let invalidateCachedConnectionsMock: jest.Mock;
+  let invalidateConfigAggregatorMock: jest.Mock;
+
+  beforeEach(() => {
+    jest.restoreAllMocks();
+    resetOrgRuntimeForTesting();
+
+    jest.spyOn(ConfigAggregatorProvider, 'getInstance').mockReturnValue({
+      reloadConfigAggregators: jest.fn()
+    } as any);
+    jest.spyOn(StateAggregator, 'clearInstanceAsync').mockResolvedValue();
+    (vscode.commands.executeCommand as jest.Mock).mockResolvedValue(undefined);
+
+    getConnectionMock = jest.fn().mockReturnValue(Effect.succeed({}));
+    invalidateCachedConnectionsMock = jest.fn().mockReturnValue(Effect.void);
+    invalidateConfigAggregatorMock = jest.fn().mockReturnValue(Effect.void);
+
+    const mockServicesApi = {
+      services: {
+        ConfigService: {
+          invalidateConfigAggregator: invalidateConfigAggregatorMock
+        },
+        ConnectionService: {
+          getConnection: getConnectionMock,
+          invalidateCachedConnections: invalidateCachedConnectionsMock
+        }
+      }
+    } as unknown as SalesforceVSCodeServicesApi;
+
+    const layer = Layer.succeed(ExtensionProviderService, {
+      getServicesApi: Effect.succeed(mockServicesApi) as ExtensionProviderServiceType['getServicesApi']
+    });
+
+    resetOrgRuntimeForTesting();
+    setAllServicesLayer(layer as ReturnType<typeof extensionProvider.buildAllServicesLayer>);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    resetOrgRuntimeForTesting();
+  });
+
+  it('should call getConnection after invalidating caches to refresh TargetOrgRef', async () => {
+    await updateConfigAndStateAggregators();
+
+    expect(invalidateConfigAggregatorMock).toHaveBeenCalled();
+    expect(invalidateCachedConnectionsMock).toHaveBeenCalled();
+    expect(getConnectionMock).toHaveBeenCalled();
+  });
+
+  it('should not throw when getConnection fails', async () => {
+    getConnectionMock.mockReturnValue(Effect.fail(new Error('No target org configured')));
+
+    await expect(updateConfigAndStateAggregators()).resolves.toBeUndefined();
+    expect(invalidateConfigAggregatorMock).toHaveBeenCalled();
+    expect(invalidateCachedConnectionsMock).toHaveBeenCalled();
+    expect(getConnectionMock).toHaveBeenCalled();
   });
 });

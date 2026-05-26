@@ -11,7 +11,6 @@ import {
   setupConsoleMonitoring,
   setupNetworkMonitoring,
   waitForVSCodeWorkbench,
-  assertWelcomeTabExists,
   closeWelcomeTabs,
   createNonTrackingOrg,
   upsertScratchOrgAuthFieldsToSettings,
@@ -25,7 +24,7 @@ import {
   waitForOutputChannelText,
   isDesktop,
   isMacDesktop,
-  QUICK_INPUT_WIDGET,
+  activeQuickInputWidget,
   EDITOR,
   ensureSecondarySideBarHidden
 } from '@salesforce/playwright-vscode-ext';
@@ -48,7 +47,6 @@ import { DEPLOY_TIMEOUT, RETRIEVE_TIMEOUT } from '../../constants';
     await test.step('setup non-tracking org', async () => {
       const createResult = await createNonTrackingOrg();
       await waitForVSCodeWorkbench(page);
-      await assertWelcomeTabExists(page);
       await closeWelcomeTabs(page);
       await ensureSecondarySideBarHidden(page);
       await upsertScratchOrgAuthFieldsToSettings(page, createResult);
@@ -65,9 +63,9 @@ import { DEPLOY_TIMEOUT, RETRIEVE_TIMEOUT } from '../../constants';
     await test.step('generate manifest from apex class', async () => {
       await executeCommandWithCommandPalette(page, packageNls.project_generate_manifest_text);
 
-      const quickInput = page.locator(QUICK_INPUT_WIDGET);
-      await quickInput.waitFor({ state: 'visible', timeout: 10_000 });
-      await quickInput.getByText(messages.manifest_input_save_prompt).waitFor({ state: 'visible', timeout: 10_000 });
+      const quickInput = activeQuickInputWidget(page);
+      await quickInput.waitFor({ state: 'attached', timeout: 10_000 });
+      await quickInput.getByText(messages.manifest_input_save_prompt).waitFor({ state: 'attached', timeout: 10_000 });
 
       await page.keyboard.press('Enter');
 
@@ -84,7 +82,7 @@ import { DEPLOY_TIMEOUT, RETRIEVE_TIMEOUT } from '../../constants';
       const deployingNotification = await waitForDeployProgressNotificationToAppear(page, 30_000);
       await expect(deployingNotification).not.toBeVisible({ timeout: DEPLOY_TIMEOUT });
 
-      await waitForOutputChannelText(page, { expectedText: 'deployed', timeout: 30_000 });
+      await waitForOutputChannelText(page, { expectedText: 'Deployed Source', timeout: 30_000 });
     });
 
     await test.step('retrieve via manifest', async () => {
@@ -94,7 +92,7 @@ import { DEPLOY_TIMEOUT, RETRIEVE_TIMEOUT } from '../../constants';
       await executeEditorContextMenuCommand(page, packageNls.retrieve_in_manifest_text, 'manifest/package.xml');
 
       await waitForOutputChannelText(page, { expectedText: 'Retrieving', timeout: 30_000 });
-      await waitForOutputChannelText(page, { expectedText: 'retrieved', timeout: RETRIEVE_TIMEOUT });
+      await waitForOutputChannelText(page, { expectedText: 'Retrieved Source', timeout: RETRIEVE_TIMEOUT });
     });
 
     await validateNoCriticalErrors(test, consoleErrors, networkErrors);

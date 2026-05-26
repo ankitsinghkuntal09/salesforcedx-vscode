@@ -4,12 +4,10 @@
  * Licensed under the BSD 3-Clause license.
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
-import { TimingUtils } from '@salesforce/salesforcedx-utils-vscode';
-import * as uuid from 'uuid';
 import * as vscode from 'vscode';
 import { telemetryService } from '../../telemetry';
-import { TestRunner, TestRunType } from '../testRunner';
-import { TestCaseInfo, TestExecutionInfo, TestFileInfo, TestInfoKind, TestType } from '../types';
+import { TestRunner } from '../testRunner';
+import { TestCaseInfo, TestExecutionInfo, TestFileInfo } from '../types';
 import { LWC_TEST_DEBUG_LOG_NAME } from '../types/constants';
 import { isLwcJestTest } from '../utils/isLwcJestTest';
 
@@ -28,7 +26,7 @@ const getDebugConfiguration = async (
   args: string[],
   cwd: string
 ): Promise<vscode.DebugConfiguration> => {
-  const sfDebugSessionId = uuid.v4();
+  const sfDebugSessionId = globalThis.crypto.randomUUID();
   const debugConfiguration: vscode.DebugConfiguration = {
     sfDebugSessionId,
     type: 'node',
@@ -51,7 +49,7 @@ const getDebugConfiguration = async (
  * @param testExecutionInfo test execution information
  */
 const lwcTestDebug = async (testExecutionInfo: TestExecutionInfo) => {
-  const testRunner = new TestRunner(testExecutionInfo, TestRunType.DEBUG);
+  const testRunner = new TestRunner(testExecutionInfo, 'debug');
   const shellExecutionInfo = await testRunner.getShellExecutionInfo();
   if (shellExecutionInfo) {
     const { command, args, workspaceFolder, testResultFsPath } = shellExecutionInfo;
@@ -86,8 +84,7 @@ export const lwcTestDebugActiveTextEditorTest = async () => {
   const { activeTextEditor } = vscode.window;
   if (activeTextEditor && isLwcJestTest(activeTextEditor.document)) {
     const testExecutionInfo: TestFileInfo = {
-      kind: TestInfoKind.TEST_FILE,
-      testType: TestType.LWC,
+      kind: 'testFile',
       testUri: activeTextEditor.document.uri
     };
     await lwcTestFileDebug({ testExecutionInfo });
@@ -101,8 +98,9 @@ export const lwcTestDebugActiveTextEditorTest = async () => {
 export const handleDidStartDebugSession = (session: vscode.DebugSession) => {
   const { configuration } = session;
   const { sfDebugSessionId } = configuration;
-  const startTime = TimingUtils.getCurrentTime();
-  debugSessionStartTimes.set(sfDebugSessionId, startTime);
+  if (typeof sfDebugSessionId === 'string') {
+    debugSessionStartTimes.set(sfDebugSessionId, globalThis.performance.now());
+  }
 };
 
 /**
@@ -111,10 +109,13 @@ export const handleDidStartDebugSession = (session: vscode.DebugSession) => {
  */
 export const handleDidTerminateDebugSession = (session: vscode.DebugSession) => {
   const { configuration } = session;
-  const startTime = debugSessionStartTimes.get(configuration.sfDebugSessionId);
-  if (Array.isArray(startTime)) {
-    telemetryService.sendCommandEvent(LWC_TEST_DEBUG_LOG_NAME, startTime, {
-      workspaceType: workspaceService.getCurrentWorkspaceTypeForTelemetry()
-    });
+  const { sfDebugSessionId } = configuration;
+  const startTime = typeof sfDebugSessionId === 'string' ? debugSessionStartTimes.get(sfDebugSessionId) : undefined;
+  if (typeof startTime === 'number') {
+    telemetryService.sendEventData(
+      LWC_TEST_DEBUG_LOG_NAME,
+      { workspaceType: workspaceService.getCurrentWorkspaceTypeForTelemetry() },
+      { executionTime: globalThis.performance.now() - startTime }
+    );
   }
 };

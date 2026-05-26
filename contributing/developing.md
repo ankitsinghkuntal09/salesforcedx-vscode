@@ -49,8 +49,8 @@ You would only do this once after you cloned the repository.
     this point, you should do initiate a `git checkout -t origin/develop` unless
     you are working on releasing.
 1.  `npm install` to bring in all the top-level dependencies. `postinstall` runs
-    wireit (peer-deps, ts project refs). Run `npm run bootstrap` to reinstall
-    deps if you change package.json.
+    wireit (`check:peer-deps`). Run `npm run bootstrap` to reinstall deps if
+    you change package.json.
 1.  Open the project in VS Code.
 
 You would usually do the following each time you close/reopen VS Code:
@@ -147,11 +147,7 @@ this command.
 
 ### `npm run compile`
 
-This invokes typescript compiler on the packages in the monorepo using [typescript project references](https://www.typescriptlang.org/docs/handbook/project-references.html).
-
-- `npm run compile:watch` invokes typescript compiler to watch for changes in the background and compile only changed code and its dependencies. This would not invoke the post compile steps such as webpack or copying file artifacts.
-- `npm run compile:clean` cleans previously compiled artifacts and invokes compile
-- `npm run check:typescript-project-references` validates typescript project references and would error if there are any missing references
+Invokes tsc on every package in the monorepo via wireit. Wireit handles caching and cross-package dependency ordering.
 
 ### `npm run clean`
 
@@ -159,8 +155,7 @@ This run `npm run clean` on each of the package in packages.
 
 ### `npm run watch`
 
-Runs `npm run compile:watch` — tsc --build --watch for the monorepo (single
-process via project references).
+Runs `npm run compile --watch` — wireit watches for input changes and re-runs affected compile scripts.
 
 ### `npm run test`
 
@@ -185,6 +180,10 @@ Runs `markdown-link-check` on all markdown files in the repo to check for any br
 - Does not check html files.
 - Ignores [429 Too Many Requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429)
   - We get 429 mostly from github as there are many URLs pointing to PRs etc in Changelog
+
+### `npm run check:actions`
+
+Validates `.github/workflows/*.{yml,yaml}` and `.github/actions/*/action.{yml,yaml}`.
 
 ### `npm run check:peer-deps`
 

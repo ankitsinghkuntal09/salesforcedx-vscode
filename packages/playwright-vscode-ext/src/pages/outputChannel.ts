@@ -8,15 +8,9 @@
 import { expect, type Page } from '@playwright/test';
 import { saveScreenshot } from '../shared/screenshotUtils';
 import { isDesktop, isMacDesktop } from '../utils/helpers';
-import {
-  EDITOR,
-  CONTEXT_MENU,
-  EDITOR_WITH_URI,
-  TAB,
-  QUICK_INPUT_WIDGET,
-  QUICK_INPUT_LIST_ROW
-} from '../utils/locators';
-import { openCommandPalette } from './commands';
+import { EDITOR, CONTEXT_MENU, EDITOR_WITH_URI, TAB, QUICK_INPUT_LIST_ROW } from '../utils/locators';
+import { activeQuickInputTextField, activeQuickInputWidget } from '../utils/quickInput';
+import { executeCommandWithCommandPalette, openCommandPalette } from './commands';
 
 const OUTPUT_PANEL_ID = '[id="workbench.panel.output"]';
 const outputPanel = (page: Page) => page.locator(OUTPUT_PANEL_ID);
@@ -178,11 +172,11 @@ export const ensureOutputPanelOpen = async (page: Page): Promise<void> => {
 
   // Use F1 command palette - most reliable across all platforms per coding rules
   await openCommandPalette(page);
-  const widget = page.locator(QUICK_INPUT_WIDGET);
-  const input = widget.locator('input.input');
+  const widget = activeQuickInputWidget(page);
+  const input = activeQuickInputTextField(page);
   await input.waitFor({ state: 'attached', timeout: 5000 });
-  await expect(input).toBeVisible({ timeout: 5000 });
-  await input.fill('>Output: Focus on Output View');
+  await input.click({ force: true, timeout: 5000 });
+  await input.fill('>Output: Focus on Output View', { force: true });
   await expect(widget.locator(QUICK_INPUT_LIST_ROW).first()).toBeAttached({ timeout: 5000 });
   await page.keyboard.press('Enter');
 
@@ -260,22 +254,12 @@ export const outputChannelContains = async (
 };
 
 /**
- * Clears the output channel by clicking the clear button in the output panel toolbar.
+ * Clears the output channel via the command palette ("View: Clear Output").
+ * Using the command palette avoids the notification toasts that can cover the toolbar button.
  * Use this to make sure that your assertions are not picking up text from the previous test unless you mean to
  */
 export const clearOutputChannel = async (page: Page): Promise<void> => {
-  const clearButton = page.getByRole('button', { name: 'Clear Output' }).first();
-  try {
-    // Wait for button to be visible and stable (handles race conditions with panel updates)
-    await clearButton.waitFor({ state: 'visible', timeout: 5000 });
-    // Ensure element is attached and stable before clicking
-    // force: true - notification toasts overlay the output panel and intercept pointer events
-    await clearButton.click({ force: true, timeout: 5000 });
-  } catch (error) {
-    // If button not visible, output may already be clear or panel not ready
-    // Log but don't fail - this is a setup operation
-    console.warn('[clearOutputChannel] Clear button not accessible:', error);
-  }
+  await executeCommandWithCommandPalette(page, 'View: Clear Output');
 
   // Wait for the clear action to take effect - output should be completely empty
   const codeArea = outputPanelCodeArea(page);

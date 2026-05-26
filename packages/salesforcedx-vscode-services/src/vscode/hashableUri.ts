@@ -15,7 +15,11 @@ export class HashableUri extends URI {
   }
 
   public static fromUri(uri: URI): HashableUri {
-    return new HashableUri(uri.scheme, uri.authority, uri.path, uri.query, uri.fragment);
+    // Normalize Windows drive letters to lowercase — VS Code URIs may have /C:/ or /c:/
+    // depending on the source (context menu, readDirectory, workspace folder, etc.).
+    // Consistent lowercase ensures HashSet comparisons work regardless of origin.
+    const path = /^\/[A-Z]:/.test(uri.path) ? uri.path.replace(/^\/[A-Z]:/, m => m.toLowerCase()) : uri.path;
+    return new HashableUri(uri.scheme, uri.authority, path, uri.query, uri.fragment);
   }
 
   public [Equal.symbol](that: Equal.Equal): boolean {
@@ -60,5 +64,16 @@ export class HashableUri extends URI {
     fragment?: string;
   }): HashableUri {
     return HashableUri.fromUri(URI.from(components));
+  }
+
+  /** Strip HashableUri subclass back to a plain URI for RPC serialization (e.g. vscode.diff) */
+  public toUri(): URI {
+    return URI.from({
+      scheme: this.scheme,
+      authority: this.authority,
+      path: this.path,
+      query: this.query,
+      fragment: this.fragment
+    });
   }
 }

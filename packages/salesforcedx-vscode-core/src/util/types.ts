@@ -6,20 +6,18 @@
  */
 
 import { CancelResponse, ContinueResponse } from '@salesforce/salesforcedx-utils-vscode';
-import { LWC } from './componentUtils';
 
-export type DirFileNameSelection = {
+type DirFileNameSelection = {
   fileName: string;
   outputdir: string;
   template?: 'ApexUnitTest' | 'BasicUnitTest';
   extension?: 'JavaScript' | 'TypeScript';
 };
 
-export type LocalComponent = DirFileNameSelection & {
+type LocalComponent = DirFileNameSelection & {
   type: string;
   suffix?: string;
 };
-
 
 export type OneOrMany = LocalComponent | LocalComponent[];
 export type ContinueOrCancel = ContinueResponse<OneOrMany> | CancelResponse;
@@ -27,15 +25,8 @@ export type ComponentName = {
   name?: string;
 };
 
-export type DeployRetrieveOperationType = 'deploy' | 'retrieve' | 'push' | 'pull' | 'delete';
 export const isContinue = (continueOrCancel: ContinueOrCancel): continueOrCancel is ContinueResponse<OneOrMany> =>
   Reflect.get(continueOrCancel, 'type') === 'CONTINUE';
 
 export const isComponentName = (component: ComponentName | LocalComponent): component is ComponentName =>
   Reflect.has(component, 'name');
-
-export const isDirFileNameSelection = (
-  component: DirFileNameSelection | LocalComponent
-): component is DirFileNameSelection => Reflect.has(component, 'fileName') && Reflect.has(component, 'outputdir');
-
-export const isLwcComponentPath = (componentDir: string): boolean => componentDir.endsWith(LWC);

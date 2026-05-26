@@ -10,7 +10,7 @@ import stylistic from '@stylistic/eslint-plugin-ts';
 import tsParser from '@typescript-eslint/parser';
 import globals from 'globals';
 import header from '@tony.ganchev/eslint-plugin-header';
-import eslintPluginImport, { __esModule } from 'eslint-plugin-import';
+import eslintPluginImport from 'eslint-plugin-import';
 import eslintPluginJsdoc from 'eslint-plugin-jsdoc';
 import eslintPluginJestFormatting from 'eslint-plugin-jest-formatting';
 import eslintPluginPreferArrow from 'eslint-plugin-prefer-arrow';
@@ -24,6 +24,7 @@ import effectPlugin from '@effect/eslint-plugin';
 import eslintPluginEslintPlugin from 'eslint-plugin-eslint-plugin';
 import jsonPlugin from '@eslint/json';
 
+import htmlEslintPlugin from '@html-eslint/eslint-plugin';
 import localRulesPlugin from './packages/eslint-local-rules/out/index.js';
 
 const localRules = localRulesPlugin.rules;
@@ -45,16 +46,23 @@ export default [
       'packages/salesforcedx-aura-language-server/src/tern/**',
       'packages/salesforcedx-vscode-lightning/tern/**',
       'packages/salesforcedx-vscode-lightning/extension/tern/**',
+      'packages/salesforcedx-vscode-lightning/src/resources/**',
       'test-assets/**',
       'packages/salesforcedx-vscode-soql/test/ui-test/resources/.mocharc-debug.ts',
-      'packages/salesforcedx-vscode-soql/src/soql-builder-ui/**',
+      // HTML: only SOQL query builder templates use @html-eslint + local i18n rule; silence other *.html
+      '**/*.html',
+      '!packages/salesforcedx-vscode-soql/src/soql-builder-ui/**/*.html',
+      // Lint *.html and querybuilder/messages/i18n.ts; keep other SOQL webview TS excluded (LWC)
+      'packages/salesforcedx-vscode-soql/src/soql-builder-ui/*.ts',
+      'packages/salesforcedx-vscode-soql/src/soql-builder-ui/**/*.ts',
+      '!packages/salesforcedx-vscode-soql/src/soql-builder-ui/modules/querybuilder/messages/i18n.ts',
       'packages/salesforcedx-vscode-soql/src/soql-data-view/**',
       'packages/salesforcedx-vscode-soql/test/jest/soql-builder-ui/**',
       'packages/salesforcedx-vscode-soql/src/soql-common/soql-parser.lib/**',
       'packages/soql-common/src/soql-parser.lib/**',
       'scripts/vsce-bundled-extension.ts',
       'scripts/reportInstalls.ts',
-      'packages/salesforcedx-lwc-language-server/src/javascript/__tests__/fixtures/**',
+      'packages/salesforcedx-lwc-language-server/test/javascript/fixtures/**',
       'packages/salesforcedx-lightning-lsp-common/src/resources/**',
       'packages/salesforcedx-lightning-lsp-common/src/html-language-service/**',
       '**/.vscode-test-web/**',
@@ -116,6 +124,7 @@ export default [
       effect: effectPlugin
     },
     rules: {
+      'local/no-vscode-uri': 'error',
       'local/command-must-be-in-package-json': [
         'error',
         {
@@ -158,8 +167,10 @@ export default [
       'unicorn/no-instanceof-builtins': 'error',
       'unicorn/no-typeof-undefined': 'error',
       'unicorn/no-static-only-class': 'error',
+      'unicorn/no-unused-properties': 'error',
       'unicorn/no-useless-collection-argument': 'error',
       'unicorn/no-useless-error-capture-stack-trace': 'error',
+      'unicorn/no-useless-iterator-to-array': 'error',
       'unicorn/no-useless-fallback-in-spread': 'error',
       'unicorn/no-useless-length-check': 'error',
       'unicorn/no-useless-promise-resolve-reject': 'error',
@@ -180,7 +191,8 @@ export default [
       'unicorn/prefer-single-call': 'error',
       'unicorn/prefer-string-replace-all': 'error',
       'unicorn/prefer-string-starts-ends-with': 'error',
-      'unicorn/prefer-ternary': ['error', 'only-single-line'],
+      'unicorn/prefer-ternary': ['error'],
+      'unicorn/prefer-simple-condition-first': 'error',
       'unicorn/filename-case': [
         'error',
         {
@@ -194,7 +206,7 @@ export default [
           '',
           {
             pattern: ' \\* Copyright \\(c\\) \\d{4}, salesforce\\.com, inc\\.',
-            template: ' * Copyright (c) 2025, salesforce.com, inc.'
+            template: ' * Copyright (c) 2026, salesforce.com, inc.'
           },
           ' * All rights reserved.',
           ' * Licensed under the BSD 3-Clause license.',
@@ -500,6 +512,10 @@ export default [
       'packages/salesforcedx**/src/**/*.test.ts',
       'packages/salesforcedx**/test/web/**/*',
       'packages/salesforcedx**/test/playwright/**/*',
+      'packages/salesforcedx-aura-language-server/test/**/*',
+      'packages/salesforcedx-lwc-language-server/test/**/*',
+      'packages/salesforcedx-lightning-lsp-common/test/**/*',
+      'packages/salesforcedx-lightning-lsp-common/src/testSupport/**/*',
       'packages/salesforcedx-vscode-automation-tests/**/*',
       'packages/playwright-vscode-ext/**/*.ts'
     ],
@@ -570,6 +586,8 @@ export default [
       'packages/salesforcedx-vscode-org-browser/**/*.ts',
       'packages/salesforcedx-vscode-metadata/**/*.ts',
       'packages/salesforcedx-vscode-apex-log/**/*.ts',
+      'packages/salesforcedx-vscode-lightning/src/services/**/*.ts',
+      'packages/salesforcedx-vscode-lightning/src/commands/**/*.ts',
       'packages/effect-ext-utils/**/*.ts'
     ],
     rules: {
@@ -586,7 +604,6 @@ export default [
       '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
       'local/no-explicit-effect-return-type': 'error',
       'local/no-effect-service-accessor-calls': 'error',
-      'local/no-vscode-uri': 'error',
 
       // Effect code should always handle promises properly
       '@typescript-eslint/no-floating-promises': 'error',
@@ -629,6 +646,25 @@ export default [
     }
   },
   {
+    // class-methods-use-this for packages not yet using Effect
+    files: [
+      'packages/salesforcedx-vscode-apex-testing/**/*.ts',
+      'packages/salesforcedx-vscode-soql/**/*.ts',
+      'packages/soql-common/**/*.ts'
+    ],
+    rules: {
+      'class-methods-use-this': 'error'
+    }
+  },
+  {
+    // @ExportTaggedError is only for suppressing knip false-positives in packages that don't export errors externally.
+    // salesforcedx-vscode-services exports errors for consumption by other packages — knip already sees them as used.
+    files: ['packages/salesforcedx-vscode-services/**/*.ts'],
+    rules: {
+      'local/no-export-tagged-error-in-services': 'error'
+    }
+  },
+  {
     // Allow top-level src/index.ts files as barrel files (public API exports)
     files: ['packages/**/src/index.ts'],
     rules: {
@@ -653,12 +689,15 @@ export default [
       'packages/salesforcedx-vscode-org-browser/playwright*.ts',
       'packages/salesforcedx-vscode-metadata/playwright*.ts',
       'packages/salesforcedx-vscode-apex-log/playwright*.ts',
+      'packages/salesforcedx-vscode-lwc/playwright*.ts',
       'packages/salesforcedx-vscode-core/test/playwright/**/*.ts',
       'packages/salesforcedx-vscode-core/playwright*.ts',
       'packages/salesforcedx-vscode-org/test/playwright/**/*.ts',
       'packages/salesforcedx-vscode-org/playwright*.ts',
       'packages/salesforcedx-vscode-soql/test/playwright/**/*.ts',
-      'packages/salesforcedx-vscode-soql/playwright*.ts'
+      'packages/salesforcedx-vscode-soql/playwright*.ts',
+      'packages/salesforcedx-vscode-visualforce/test/playwright/**/*.ts',
+      'packages/salesforcedx-vscode-visualforce/playwright*.ts'
     ],
     rules: {
       // Deactivate import-order for tests to allow for mock-before-import
@@ -684,6 +723,12 @@ export default [
       '@typescript-eslint/prefer-optional-chain': 'off',
       'prefer-arrow/prefer-arrow-functions': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off'
+    }
+  },
+  {
+    files: ['scripts/validateActions.ts'],
+    rules: {
+      'no-restricted-imports': 'off'
     }
   },
   // ESLint plugin rules for eslint-local-rules package only
@@ -724,13 +769,15 @@ export default [
       'local/package-json-extension-icon': 'error',
       'local/package-json-icon-paths': 'error',
       'local/package-json-command-refs': 'error',
+      'local/package-json-no-default-true': 'error',
+      'local/package-json-require-root-install': 'error',
       'local/package-json-view-refs': 'error',
       'local/package-json-salesforce-dep-versions': 'error'
     }
   },
   {
     files: ['packages/*/.vscodeignore'],
-    ignores: ['packages/salesforcedx-vscode-lwc/.vscodeignore'],
+    ignores: [],
     plugins: {
       local: localPlugin
     },
@@ -738,6 +785,18 @@ export default [
     rules: {
       'local/vscodeignore-required-patterns': 'error',
       'local/vscodeignore-contributes-conflict': 'error'
+    }
+  },
+  // SOQL Builder LWC templates: unknown i18n.* keys vs querybuilder/messages/i18n.ts (SOQL package only)
+  {
+    ...htmlEslintPlugin.configs['flat/recommended'],
+    files: ['packages/salesforcedx-vscode-soql/src/soql-builder-ui/**/*.html'],
+    plugins: {
+      ...htmlEslintPlugin.configs['flat/recommended'].plugins,
+      local: localPlugin
+    },
+    rules: {
+      'local/query-builder-html-i18n-keys': 'error'
     }
   },
   eslintConfigPrettier

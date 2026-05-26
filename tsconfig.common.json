@@ -5,9 +5,8 @@
   // https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping
   "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
-    "composite": true,
     "target": "ES2023",
-    "lib": ["es2023", "dom", "es2024.collection", "es2024.object"],
+    "lib": ["es2023", "dom", "es2024.collection", "es2024.object", "es2024.promise", "esnext.collection"],
     "module": "node16",
     "moduleResolution": "Node16",
     "esModuleInterop": false,
@@ -16,15 +15,12 @@
     "types": ["jest", "node"],
     "declaration": true,
     "declarationMap": true,
-    "preserveConstEnums": true,
+    "isolatedModules": true,
     "noImplicitAny": true,
     // TODO: cleanup unknown usage in catch blocks and remove below setting
     "useUnknownInCatchVariables": false,
     "noUnusedLocals": true,
     "allowSyntheticDefaultImports": true,
-    "plugins": [
-      { "name": "@effect/language-service" },
-      { "name": "@salesforce/vscode-i18n/tsPlugin" }
-    ]
+    "plugins": [{ "name": "@effect/language-service" }, { "name": "@salesforce/vscode-i18n/tsPlugin" }]
   }
 }

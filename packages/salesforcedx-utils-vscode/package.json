@@ -10,11 +10,10 @@
   ],
   "main": "out/src",
   "dependencies": {
-    "@salesforce/core": "^8.28.0",
+    "@salesforce/core": "^8.31.0",
     "@salesforce/effect-ext-utils": "*",
     "@salesforce/o11y-reporter": "^1.8.1",
     "@salesforce/salesforcedx-utils": "*",
-    "@salesforce/source-tracking": "^7.8.8",
     "@salesforce/vscode-i18n": "*",
     "@salesforce/vscode-service-provider": "^1.5.0",
     "@vscode/extension-telemetry": "^1.0.0",
@@ -27,9 +26,7 @@
     "vscode-uri": "^3.1.0",
     "zod": "^4.3.2"
   },
-  "devDependencies": {
-    "@salesforce/source-deploy-retrieve": "^12.32.1"
-  },
+  "devDependencies": {},
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -37,11 +34,12 @@
     "compile": "wireit",
     "lint": "wireit",
     "clean": "shx rm -rf node_modules out dist coverage .nyc_output .wireit .eslintcache",
-    "test": "wireit"
+    "test": "wireit",
+    "test:compile": "wireit"
   },
   "wireit": {
     "compile": {
-      "command": "tsc --build --pretty",
+      "command": "tsc --pretty",
       "clean": "if-file-deleted",
       "dependencies": [
         "../salesforcedx-utils:compile",
@@ -50,23 +48,31 @@
       ],
       "files": [
         "src/**/*.ts",
-        "test/**/*.ts",
         "tsconfig.json",
         "../../tsconfig.common.json",
         "package.json"
       ],
       "output": [
-        "out/**",
-        "tsconfig.tsbuildinfo"
+        "out/**"
       ]
     },
-    "test": {
-      "command": "jest --coverage",
+    "test:compile": {
+      "command": "tsc -p test/tsconfig.json",
       "dependencies": [
         "compile"
       ],
       "files": [
-        "src/**/*.ts",
+        "test/**/*.ts",
+        "test/tsconfig.json"
+      ],
+      "output": []
+    },
+    "test": {
+      "command": "jest",
+      "dependencies": [
+        "test:compile"
+      ],
+      "files": [
         "test/**/*.ts",
         "jest.config.js",
         "../../config/jest.base.config.js"
@@ -78,7 +84,8 @@
     "lint": {
       "command": "eslint --color --cache --cache-location .eslintcache .",
       "dependencies": [
-        "../eslint-local-rules:compile"
+        "../eslint-local-rules:compile",
+        "compile"
       ],
       "files": [
         "src/**/*.ts",

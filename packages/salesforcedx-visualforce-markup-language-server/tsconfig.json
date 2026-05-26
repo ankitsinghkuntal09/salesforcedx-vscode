@@ -4,15 +4,10 @@
     "rootDir": ".",
     "outDir": "out",
     "strict": false,
-    "noImplicitAny": false,
+    "noImplicitAny": false
     // src/beautify/*.js files are copied over to out and not run through tsc
     //  due to https://github.com/microsoft/TypeScript/issues/37832
     // "allowJs": true, // for the beautify js files
   },
-  "exclude": [
-    "node_modules",
-    ".vscode-test",
-    "out"
-  ],
-  "references": []
+  "include": ["src/**/*.ts"]
 }

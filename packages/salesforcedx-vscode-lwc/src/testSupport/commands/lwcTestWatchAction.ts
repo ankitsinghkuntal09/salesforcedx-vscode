@@ -6,7 +6,7 @@
  */
 import * as vscode from 'vscode';
 import { testWatcher } from '../testRunner/testWatcher';
-import { TestExecutionInfo, TestFileInfo, TestInfoKind, TestType } from '../types';
+import { TestExecutionInfo, TestFileInfo } from '../types';
 
 import { isLwcJestTest } from '../utils/isLwcJestTest';
 
@@ -27,7 +27,7 @@ const lwcTestStartWatching = async (data: { testExecutionInfo: TestExecutionInfo
  * It will terminate the test watch task matched by the test URI.
  * @param data provided by test watch commands
  */
-const lwcTestStopWatching = async (data: { testExecutionInfo: TestExecutionInfo }) => {
+const lwcTestStopWatching = (data: { testExecutionInfo: TestExecutionInfo }) => {
   const { testExecutionInfo } = data;
   testWatcher.stopWatchingTest(testExecutionInfo);
 };
@@ -63,8 +63,7 @@ const getCurrentFileTestInfo = (): TestFileInfo | undefined => {
   const { activeTextEditor } = vscode.window;
   if (activeTextEditor && isLwcJestTest(activeTextEditor.document)) {
     return {
-      kind: TestInfoKind.TEST_FILE,
-      testType: TestType.LWC,
+      kind: 'testFile',
       testUri: activeTextEditor.document.uri
     };
   }

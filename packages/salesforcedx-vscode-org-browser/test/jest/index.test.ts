@@ -61,7 +61,6 @@ import { FsService } from 'salesforcedx-vscode-services/src/vscode/fsService';
 import { ConfigService } from 'salesforcedx-vscode-services/src/core/configService';
 import { SettingsService, SettingsError } from 'salesforcedx-vscode-services/src/vscode/settingsService';
 import { EditorService } from 'salesforcedx-vscode-services/src/vscode/editorService';
-import { FileWatcherService } from 'salesforcedx-vscode-services/src/vscode/fileWatcherService';
 import { getDefaultOrgRef } from 'salesforcedx-vscode-services/src/core/defaultOrgRef';
 import { SdkLayerFor } from 'salesforcedx-vscode-services/src/observability/spans';
 import { ChannelService } from 'salesforcedx-vscode-services/src/vscode/channelService';
@@ -160,7 +159,8 @@ const MockSettingsServiceLayer = Layer.succeed(
         try: async () => undefined,
         catch: () => new SettingsError({ cause: new Error('Mock error'), section: '', key: '', message: 'Mock error' })
       }),
-    getRetrieveOnLoad: () => Effect.succeed('')
+    getRetrieveOnLoad: () => Effect.succeed(''),
+    getInternalDev: () => Effect.succeed(false)
   } as const)
 );
 
@@ -169,7 +169,8 @@ const mockConnection: Connection = {} as Connection;
 const MockConnectionServiceLayer = Layer.succeed(
   ConnectionService,
   new ConnectionService({
-    getConnection: () => Effect.sync(() => mockConnection)
+    getConnection: () => Effect.sync(() => mockConnection),
+    invalidateCachedConnections: () => Effect.void
   } as const)
 );
 
@@ -221,7 +222,6 @@ const mockServicesApi = {
     ConfigService: {} as typeof ConfigService,
     ConnectionService: {} as typeof ConnectionService,
     EditorService: {} as typeof EditorService,
-    FileWatcherService: {} as typeof FileWatcherService,
     FsService: {} as typeof FsService,
     MetadataDeleteService: {} as typeof MetadataDeleteService,
     MetadataDescribeService: {} as typeof MetadataDescribeService,

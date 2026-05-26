@@ -12,7 +12,7 @@
     "@vscode/test-web": "^0.0.78"
   },
   "devDependencies": {
-    "@salesforce/core": "^8.28.0"
+    "@salesforce/core": "^8.31.0"
   },
   "scripts": {
     "compile": "wireit",
@@ -26,23 +26,24 @@
   },
   "wireit": {
     "compile": {
-      "command": "tsc --build --pretty",
+      "command": "tsc --pretty",
       "clean": "if-file-deleted",
       "files": [
         "src/**/*.ts",
+        "test/**/*.ts",
         "tsconfig.json",
         "../../tsconfig.common.json",
         "package.json"
       ],
       "output": [
-        "out/**",
-        "tsconfig.tsbuildinfo"
+        "out/**"
       ]
     },
     "lint": {
       "command": "eslint --color --cache --cache-location .eslintcache .",
       "dependencies": [
-        "../eslint-local-rules:compile"
+        "../eslint-local-rules:compile",
+        "compile"
       ],
       "files": [
         "src/**/*.ts",
@@ -51,7 +52,7 @@
       "output": []
     },
     "test:web": {
-      "command": "playwright test --config=playwright.config.web.ts",
+      "command": "playwright test --config=test/playwright/playwright.config.web.ts",
       "env": {
         "PLAYWRIGHT_WORKERS": {
           "external": true
@@ -65,7 +66,6 @@
       "files": [
         "src/**/*.ts",
         "test/playwright/**/*.ts",
-        "playwright.config.web.ts",
         "package*.json"
       ],
       "output": []
@@ -73,18 +73,20 @@
     "test:desktop": {
       "env": {
         "VSCODE_DESKTOP": "1",
+        "E2E_FROM_VSIX": {
+          "external": true
+        },
         "PLAYWRIGHT_WORKERS": {
           "external": true
         }
       },
-      "command": "playwright test --config=playwright.config.desktop.ts",
+      "command": "playwright test --config=test/playwright/playwright.config.desktop.ts",
       "dependencies": [
         "compile",
         "../salesforcedx-vscode-services:vscode:bundle"
       ],
       "files": [
         "test/playwright/**/*.ts",
-        "playwright.config.desktop.ts",
         "package*.json"
       ],
       "output": []

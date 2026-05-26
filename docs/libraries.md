@@ -12,7 +12,7 @@ This project depends on several Salesforce libraries. To develop or debug agains
 | [@salesforce/apex-node](https://github.com/forcedotcom/salesforcedx-apex)                   | [forcedotcom/salesforcedx-apex](https://github.com/forcedotcom/salesforcedx-apex)           | [@salesforce/apex-node](https://www.npmjs.com/package/@salesforce/apex-node)                           |
 | [@salesforce/templates](https://github.com/forcedotcom/salesforcedx-templates)              | [forcedotcom/salesforcedx-templates](https://github.com/forcedotcom/salesforcedx-templates) | [@salesforce/templates](https://www.npmjs.com/package/@salesforce/templates)                           |
 
-Related: `@salesforce/apex` (module resolver for LWC; source repo not in package metadata), `@salesforce/apex-tmlanguage` ([forcedotcom/apex-tmLanguage](https://github.com/forcedotcom/apex-tmLanguage)).
+Related: `@salesforce/apex` (LWC module resolver; repo not in metadata). `@salesforce/apex-tmlanguage` ([forcedotcom/apex-tmLanguage](https://github.com/forcedotcom/apex-tmLanguage)): **root** `package.json` `devDependencies` only; grammar files are copied from **repo root** `node_modules/@salesforce/apex-tmlanguage/grammars/` in each extension (`../../node_modules/...` from `packages/<name>`). Shared Apex language configuration: **`extension-assets/syntaxes/apex.configuration.json`** (source of truth); `salesforcedx-vscode-apex-log` and `salesforcedx-vscode-apex` copy it into each package’s `syntaxes/` during `copy:grammars`. `salesforcedx-vscode-apex-log` `copy:grammars` also writes `apex.tmLanguage`; SOQL copies `soql.tmLanguage`; Apex copies `apex.tmLanguage` plus that config. In `salesforcedx-vscode-apex`, `compile` depends on `copy:grammars` (`vscode:bundle` does not list `copy:grammars` separately).
 
 ## Running Extensions with Local Library Builds
 
@@ -23,7 +23,8 @@ Related: `@salesforce/apex` (module resolver for LWC; source repo not in package
    - Alternative: `npm link` if you're comfortable with it; copy is simpler and avoids symlink quirks.
 
 1. **Bundle** — Run `npm run vscode:bundle`. See [Build](./Build.md) for bundling details.
-   - **Wireit cache:** Wireit does not watch `node_modules` for changes. After copying a library, use `WIREIT_CACHE=none` so the bundle runs with your changes instead of a cached result:
+   - **Wireit cache:** Wireit only watches `node_modules` paths listed in `wireit.files`. `salesforcedx-vscode-services` tracks `node_modules/@salesforce/templates/lib/**`; for other copied libraries, use `WIREIT_CACHE=none` so the bundle runs with your changes instead of a cached result:
+
      ```bash
      WIREIT_CACHE=none npm run vscode:bundle
      ```

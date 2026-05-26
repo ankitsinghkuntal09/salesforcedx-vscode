@@ -8,10 +8,9 @@ import { Config } from '@salesforce/core/config';
 import { Global } from '@salesforce/core/global';
 import * as Duration from 'effect/Duration';
 import * as Effect from 'effect/Effect';
-import * as PubSub from 'effect/PubSub';
 import * as Stream from 'effect/Stream';
 import { join, normalize, sep } from 'node:path';
-import { FileWatcherService } from '../vscode/fileWatcherService';
+import { FileChangePubSub } from '../vscode/fileChangePubSub';
 import { ConfigService } from './configService';
 import { ConnectionService } from './connectionService';
 import { clearDefaultOrgRef } from './defaultOrgRef';
@@ -27,24 +26,20 @@ const isConfigFile = (path: string, globalConfigPath: string, projectConfigPatte
  * reload the connection when they change
  * if the connection fails, clear the defaultOrgRef
  * */
-export const watchConfigFiles = () =>
-  Effect.scoped(
-    Effect.gen(function* () {
-      const configFileName = Config.getFileName();
-      const globalConfigPath = normalize(join(Global.DIR, configFileName));
-      const projectConfigPattern = `${Global.SF_STATE_FOLDER}${sep}${configFileName}`;
+export const watchConfigFiles = Effect.fn('watchConfigFiles')(function* () {
+  const configFileName = Config.getFileName();
+  const globalConfigPath = normalize(join(Global.DIR, configFileName));
+  const projectConfigPattern = `${Global.SF_STATE_FOLDER}${sep}${configFileName}`;
 
-      const fileWatcherService = yield* FileWatcherService;
-      const dequeue = yield* PubSub.subscribe(fileWatcherService.pubsub);
-      const configService = yield* ConfigService;
+  const fileChangePubSub = yield* FileChangePubSub;
 
-      // Subscribe to file changes and clear defaultOrgRef when config files change
-      yield* Stream.fromQueue(dequeue).pipe(
-        Stream.filter(event => isConfigFile(event.uri.fsPath, globalConfigPath, projectConfigPattern)),
-        Stream.debounce(Duration.millis(5)),
-        Stream.tap(() => configService.invalidateConfigAggregator()),
-        // get connection will cause defaultOrgRef to update, clear the ref if there's any error where we won't have an org connection.
-        Stream.runForEach(() => ConnectionService.getConnection().pipe(Effect.catchAll(() => clearDefaultOrgRef())))
-      );
-    })
+  // Subscribe to file changes and clear defaultOrgRef when config files change
+  yield* Stream.fromPubSub(fileChangePubSub).pipe(
+    Stream.filter(event => isConfigFile(event.uri.fsPath, globalConfigPath, projectConfigPattern)),
+    Stream.debounce(Duration.millis(5)),
+    Stream.tap(() => ConfigService.invalidateConfigAggregator()),
+    Stream.tap(() => ConnectionService.invalidateCachedConnections()),
+    // get connection will cause defaultOrgRef to update, clear the ref if there's any error where we won't have an org connection.
+    Stream.runForEach(() => ConnectionService.getConnection().pipe(Effect.catchAll(() => clearDefaultOrgRef())))
   );
+});

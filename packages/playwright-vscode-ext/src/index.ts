@@ -10,9 +10,11 @@ export {
   filterErrors,
   filterNetworkErrors,
   waitForVSCodeWorkbench,
-  assertWelcomeTabExists,
   waitForQuickInputFirstOption,
+  selectFirstQuickInputOption,
+  selectQuickInputOption,
   closeWelcomeTabs,
+  dismissSignInWalkthroughDialog,
   closeSettingsTab,
   waitForWorkspaceReady,
   typingSpeed,
@@ -20,17 +22,21 @@ export {
   isMacDesktop,
   isWindowsDesktop,
   validateNoCriticalErrors,
+  removeAllDebugLevels,
   ensureSecondarySideBarHidden,
   waitForExtensionsActivated,
   closeWorkspaceToEmptyWindow,
   prepareNoFolderOpenForPaletteTests
 } from './utils/helpers';
 
+export { activeQuickInputWidget, activeQuickInputTextField } from './utils/quickInput';
+
 export {
   createFileWithContents,
   createApexClass,
   deployCurrentSourceToOrg,
   openFileByName,
+  openFileFromExplorerTree,
   editAndSaveOpenFile as editOpenFile,
   setupMinimalOrgAndAuth,
   createAndDeployApexTestClass
@@ -49,7 +55,8 @@ export {
   APEX_TRACE_FLAG_STATUS_BAR,
   NOTIFICATION_LIST_ITEM,
   SETTINGS_SEARCH_INPUT,
-  CONTEXT_MENU
+  CONTEXT_MENU,
+  CODELENS_ITEM
 } from './utils/locators';
 
 export { CODE_BUILDER_WEB_SECTION, INSTANCE_URL_KEY, ACCESS_TOKEN_KEY, API_VERSION_KEY } from './constants';
@@ -61,7 +68,13 @@ export { createNonTrackingOrg, NON_TRACKING_ORG_ALIAS, HUB_ORG_ALIAS } from './o
 // Pages
 export { upsertScratchOrgAuthFieldsToSettings, openSettingsUI, upsertSettings } from './pages/settings';
 
-export { executeCommandWithCommandPalette, openCommandPalette, verifyCommandDoesNotExist, verifyCommandExists } from './pages/commands';
+export {
+  executeCommandWithCommandPalette,
+  openCommandPalette,
+  verifyCommandDoesNotExist,
+  verifyCommandExists
+} from './pages/commands';
+export type { OpenCommandPaletteOptions } from './pages/commands';
 
 export { executeEditorContextMenuCommand, executeExplorerContextMenuCommand } from './pages/contextMenu';
 

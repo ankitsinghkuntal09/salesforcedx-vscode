@@ -42,17 +42,10 @@ export const buildAllServicesLayer = (context: ExtensionContext) =>
       // ErrorHandlerService depends on ChannelService, provide the extension's channel
       const channelLayer = api.services.ChannelServiceLayer(displayName);
       const errorHandlerWithChannel = Layer.provide(api.services.ErrorHandlerService.Default, channelLayer);
-      // Merge all the service layers from the API
       return Layer.mergeAll(
+        Layer.succeedContext(api.services.prebuiltServicesDependencies),
         ExtensionProviderServiceLive,
         api.services.ExtensionContextServiceLayer(context),
-        api.services.ChannelServiceLayer(displayName),
-        api.services.FsService.Default,
-        api.services.AliasService.Default,
-        api.services.ConfigService.Default,
-        api.services.ConnectionService.Default,
-        api.services.ProjectService.Default,
-        api.services.WorkspaceService.Default,
         api.services.SdkLayerFor(context),
         channelLayer,
         errorHandlerWithChannel
@@ -76,13 +69,12 @@ export const setAllServicesLayer = (layer: ReturnType<typeof buildAllServicesLay
  * Single persistent runtime for org extension Effect executions.
  * Built once on first use to avoid rebuilding services across commands.
  */
-const createOrgRuntime = () => ManagedRuntime.make(AllServicesLayer);
-
-let _orgRuntime: ReturnType<typeof createOrgRuntime> | undefined;
-export const getOrgRuntime = () => {
-  _orgRuntime ??= createOrgRuntime();
-  return _orgRuntime;
-};
+type OrgRuntime = ManagedRuntime.ManagedRuntime<
+  Layer.Layer.Success<ReturnType<typeof buildAllServicesLayer>>,
+  Layer.Layer.Error<ReturnType<typeof buildAllServicesLayer>>
+>;
+let _orgRuntime: OrgRuntime | undefined;
+export const getOrgRuntime = () => (_orgRuntime ??= ManagedRuntime.make(AllServicesLayer));
 
 /** Reset cached runtime. Used by tests when AllServicesLayer changes between tests. */
 export const resetOrgRuntimeForTesting = (): void => {

@@ -8,7 +8,6 @@ import { test } from '../fixtures';
 import { expect } from '@playwright/test';
 import { OrgBrowserPage } from '../pages/orgBrowserPage';
 import {
-  assertWelcomeTabExists,
   closeWelcomeTabs,
   createDreamhouseOrg,
   ensureSecondarySideBarHidden,
@@ -24,7 +23,6 @@ test.setTimeout(RETRIEVE_TIMEOUT_MS);
 test.beforeEach(async ({ page }) => {
   const createResult = await createDreamhouseOrg();
   await waitForVSCodeWorkbench(page);
-  await assertWelcomeTabExists(page);
   await closeWelcomeTabs(page);
   const orgBrowserPage = new OrgBrowserPage(page);
   await upsertScratchOrgAuthFieldsToSettings(page, createResult, () => orgBrowserPage.waitForProject());
@@ -53,7 +51,10 @@ test('Org Browser - CustomObject retrieval: customobject headless: retrieve Brok
     const item = await orgBrowserPage.getMetadataItem('CustomObject', 'Broker__c');
     await item.hover();
     // Wait for toolbar buttons to appear before taking snapshot
-    await expect(item.locator('.action-label[aria-label="Retrieve Metadata"]').first(), 'Retrieve button should be visible').toBeVisible({ timeout: 3000 });
+    await expect(
+      item.locator('.action-label[aria-label="Retrieve Metadata"]').first(),
+      'Retrieve button should be visible'
+    ).toBeVisible({ timeout: 3000 });
     // Expected structure: treeitem at level 2 with accessible name containing "Broker__c",
     // toolbar containing both Refresh Type and Retrieve Metadata buttons
     await expect(item).toHaveRole('treeitem');

@@ -19,7 +19,7 @@ export const messages = {
   progress_running_query: 'Running query',
   soql_query_results: 'SOQL Query Results',
   info_no_default_org:
-    'INFO: No default org found. Set a default org to use SOQL Builder. Run "SFDX: Create a Default Scratch Org" or "SFDX: Authorize an Org" to set one.',
+    'INFO: SOQL Builder requires a default org. Use the "Set a Default Org" button or run "SFDX: Set a Default Org" from the command palette to set one.',
   info_syntax_unsupported: 'INFO: This syntax is not yet supported in SOQL Builder. Instead, use a text editor.',
   info_file_save_success: 'We saved the results as: %s',
   error_sobject_metadata_request:
@@ -66,7 +66,7 @@ export const messages = {
   data_query_running_query: 'Running query with %s...',
   data_query_complete: 'Query complete with %d records returned',
   data_query_warning_limit:
-    'Warning: The query result is missing %d records due to a %d record limit. Increase the number of records returned by setting the config value "org-max-query-limit" or the environment variable "SF_ORG_MAX_QUERY_LIMIT" to %d or greater than %d.',
+    'Warning: The query result is missing %d records due to a %d record limit. Increase the number of records returned by updating the "salesforcedx-vscode-soql.maxQueryLimit" setting to %d or greater than %d.',
   data_query_no_records: 'No records found',
   data_query_table_title: 'Query Results',
   soql_file_name_prompt: 'Enter a name for the new SOQL file',
@@ -75,6 +75,11 @@ export const messages = {
     'File name must start with a letter and contain only alphanumeric characters and underscores',
   soql_output_dir_default_description: '(default)',
   soql_output_dir_prompt: 'Select the target directory',
+  soql_export_results_file_name_prompt:
+    'Enter a file name for the exported results (the .csv or .json extension is added automatically)',
+  soql_export_results_file_name_empty_error: 'File name cannot be empty',
+  soql_export_results_file_name_format_error:
+    'File name contains invalid characters. Avoid \\ / : * ? " < > | and control characters.',
   REST_API: 'REST API',
   REST_API_description: 'Use REST API to execute the query',
   tooling_API: 'Tooling API',

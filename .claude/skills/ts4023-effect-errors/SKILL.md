@@ -48,7 +48,7 @@ export type { EmptyComponentSetError } from './core/componentSetService';
 ### 4. Verify
 
 ```bash
-npx tsc --build packages/salesforcedx-vscode-metadata --force
+npm run compile -w packages/salesforcedx-vscode-metadata
 ```
 
 ## Why non-exported errors matter
@@ -57,12 +57,21 @@ If a service method like `ensureNonEmptyComponentSet` can fail with `EmptyCompon
 
 ## Knip false positives
 
-Knip flags these as "unused" - ignore. TypeScript needs them for declaration emit, not runtime imports.
+Knip flags these as "unused exports" when the error class is defined and used within the same file but exported for TS4023 reasons. Fix by adding `/** @ExportTaggedError */` JSDoc to the export:
+
+```typescript
+/** @ExportTaggedError */
+export class NoFilesRetrievedError extends Schema.TaggedError<NoFilesRetrievedError>()('NoFilesRetrievedError', {
+  message: Schema.String
+}) {}
+```
+
+**Do NOT add `@ExportTaggedError` to errors exported from `salesforcedx-vscode-services`** — those are consumed by other packages and knip correctly sees them as used.
 
 ## Checklist
 
 - [ ] `rg "class.*TaggedError"` - find ALL errors (with AND without `export`)
 - [ ] Add `export` to any non-exported error classes used in Effect chains
 - [ ] Add `export type { ErrorName }` to services `index.ts`
-- [ ] `npx tsc --build <package> --force` passes
-- [ ] Ignore knip "unused" warnings for these exports
+- [ ] `npm run compile -w <package>` passes
+- [ ] Add `/** @ExportTaggedError */` JSDoc to suppress knip false positives (for errors that are only used within the same package, not consumed by other packages)

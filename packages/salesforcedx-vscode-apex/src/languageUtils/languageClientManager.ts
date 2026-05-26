@@ -5,7 +5,7 @@
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
 import { LineBreakpointInfo } from '@salesforce/salesforcedx-utils';
-import { hasRootWorkspace, TimingUtils } from '@salesforce/salesforcedx-utils-vscode';
+import { hasRootWorkspace } from '@salesforce/salesforcedx-utils-vscode';
 import { execSync } from 'node:child_process';
 import * as vscode from 'vscode';
 import { URI } from 'vscode-uri';
@@ -69,6 +69,7 @@ export class LanguageClientManager {
   private statusBarItem: ApexLSPStatusBarItem | undefined;
   private isRestarting: boolean = false;
   private restartTimeout: NodeJS.Timeout | undefined;
+  private outputChannel: vscode.OutputChannel | undefined;
 
   private readonly RESTART_OPTIONS = {
     cleanAndRestart: nls.localize('apex_language_server_restart_dialog_clean_and_restart'),
@@ -108,6 +109,11 @@ export class LanguageClientManager {
 
   public setStatus(status: ClientStatus, message: string): void {
     this.status = new LanguageClientStatus(status, message);
+  }
+
+  public disposeOutputChannel(): void {
+    this.outputChannel?.dispose();
+    this.outputChannel = undefined;
   }
 
   public async getLineBreakpointInfo(): Promise<LineBreakpointInfo[]> {
@@ -242,6 +248,7 @@ export class LanguageClientManager {
           `${nls.localize('apex_language_server_restart_dialog_restart_only')} - ${errorMessage}`
         );
       }
+
       if (selectedOption === nls.localize('apex_language_server_restart_dialog_clean_and_restart')) {
         await this.removeApexDB();
       }
@@ -255,8 +262,10 @@ export class LanguageClientManager {
       this.restartTimeout = setTimeout(() => {
         void (async () => {
           try {
-            // Dispose of the old output channel before restarting the client
-            alc.outputChannel?.dispose();
+            // Dispose the old client after stopping but before creating the new one.
+            // This deregisters providers, watchers, and middleware that would otherwise
+            // attempt to use the closed channel during the restart gap.
+            await alc.dispose();
             await this.createLanguageClient(extensionContext, statusBarInstance);
           } catch (error) {
             // Log any errors that occur during client creation
@@ -300,8 +309,12 @@ export class LanguageClientManager {
   ): Promise<void> {
     const telemetryService = getTelemetryService();
     try {
-      const langClientStartTime = TimingUtils.getCurrentTime();
-      this.setClientInstance(await languageServer.createLanguageServer(extensionContext));
+      const langClientStartTime = globalThis.performance.now();
+
+      // Create or reuse the output channel to avoid duplicates on restart
+      this.outputChannel ??= vscode.window.createOutputChannel(nls.localize('client_name'));
+
+      this.setClientInstance(await languageServer.createLanguageServer(extensionContext, this.outputChannel));
 
       const languageClient = this.getClientInstance();
 
@@ -317,7 +330,7 @@ export class LanguageClientManager {
         });
 
         await languageClient.start();
-        const startTime = TimingUtils.getElapsedTime(langClientStartTime);
+        const startTime = globalThis.performance.now() - langClientStartTime;
         telemetryService.sendEventData('apexLSPStartup', undefined, {
           activationTime: startTime
         });
@@ -381,9 +394,21 @@ export class LanguageClientManager {
       ? 'powershell.exe -command "Get-CimInstance -ClassName Win32_Process | ForEach-Object { [PSCustomObject]@{ ProcessId = $_.ProcessId; ParentProcessId = $_.ParentProcessId; CommandLine = $_.CommandLine } } | Format-Table -HideTableHeaders"'
       : 'ps -e -o pid,ppid,command';
 
-    const entries = this.parseApexLspPsOutput(execSync(cmd).toString());
-    return entries
-      .map(p => ({ ...p, orphaned: false }))
+    const stdout = execSync(cmd).toString();
+    return stdout
+      .trim()
+      .split(/\r?\n/g)
+      .map((line: string) => {
+        const [pidStr, ppidStr, ...commandParts] = line.trim().split(/\s+/);
+        const pid = parseInt(pidStr, 10);
+        const ppid = parseInt(ppidStr, 10);
+        const command = commandParts.join(' ');
+        return { pid, ppid, command, orphaned: false };
+      })
+      .filter(
+        (processInfo: ProcessDetail) => !['ps', 'grep', 'Get-CimInstance'].some(c => processInfo.command.includes(c))
+      )
+      .filter((processInfo: ProcessDetail) => processInfo.command.includes('apex-jorje-lsp.jar'))
       .map(processInfo => {
         const checkOrphanedCmd = isWindows
           ? `powershell.exe -command "Get-CimInstance -ClassName Win32_Process -Filter 'ProcessId = ${processInfo.ppid}'"`
@@ -408,76 +433,6 @@ export class LanguageClientManager {
 
   public terminateProcess(pid: number): void {
     process.kill(pid, 'SIGKILL');
-  }
-
-  /**
-   * Parse ps/PowerShell stdout into Apex LS process entries.
-   * Expects "pid ppid command" format (Unix ps -e -o pid,ppid,command).
-   * Also handles Win32_Process output with ProcessId, ParentProcessId, CommandLine.
-   */
-  private parseApexLspPsOutput(stdout: string): { pid: number; ppid: number; command: string }[] {
-    const skipCommands = ['ps', 'grep', 'Get-CimInstance'];
-    const apexJar = 'apex-jorje-lsp.jar';
-    return stdout
-      .trim()
-      .split(/\r?\n/g)
-      .map(line => {
-        const parts = line.trim().split(/\s+/);
-        if (parts.length < 3) return null;
-        const pid = parseInt(parts[0], 10);
-        const ppid = parseInt(parts[1], 10);
-        const command = parts.slice(2).join(' ');
-        if (Number.isNaN(pid) || Number.isNaN(ppid)) return null;
-        return { pid, ppid, command };
-      })
-      .filter((p): p is NonNullable<typeof p> => p !== null)
-      .filter(p => !skipCommands.some(c => p.command.includes(c)) && p.command.includes(apexJar));
-  }
-
-  /**
-   * Find and SIGKILL Apex LS processes that are direct children of the current process.
-   * Used when LSP shutdown times out so the extension host can exit (child's stdio pipes close).
-   */
-  public killChildApexProcesses(): void {
-    const isWindows = process.platform === 'win32';
-    if (!this.canRunCheck(isWindows)) {
-      return;
-    }
-    const parentPid = process.pid;
-    try {
-      if (isWindows) {
-        const cmd = `powershell.exe -command "Get-CimInstance -ClassName Win32_Process | Where-Object { $_.ParentProcessId -eq ${parentPid} } | ForEach-Object { [PSCustomObject]@{ ProcessId = $_.ProcessId; CommandLine = $_.CommandLine } } | Format-Table -HideTableHeaders"`;
-        const stdout = execSync(cmd).toString();
-        const lines = stdout.trim().split(/\r?\n/g);
-        for (const line of lines) {
-          const parts = line.trim().split(/\s+/);
-          if (parts.length < 2) continue;
-          const pid = parseInt(parts[0], 10);
-          const command = parts.slice(1).join(' ');
-          if (Number.isNaN(pid)) continue;
-          if (command.includes('apex-jorje-lsp.jar')) {
-            try {
-              this.terminateProcess(pid);
-            } catch {
-              // Process may already be gone
-            }
-          }
-        }
-      } else {
-        const stdout = execSync('ps -e -o pid,ppid,command').toString();
-        for (const p of this.parseApexLspPsOutput(stdout)) {
-          if (p.ppid === parentPid) {
-            try {
-              this.terminateProcess(p.pid);
-            } catch {
-              // Process may already be gone
-            }
-          }
-        }
-      }
-    } catch {
-      // Ignore ps/exec errors
-    }
   }
 
   public canRunCheck(isWindows: boolean): boolean {

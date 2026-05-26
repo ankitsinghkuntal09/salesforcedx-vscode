@@ -89,15 +89,17 @@ const buildOrgTypes = (projectUrl: string | undefined): Record<string, vscode.Qu
   );
 
 export class AuthParamsGatherer implements ParametersGatherer<AuthParams> {
-  constructor(public instanceUrl: string | undefined) {}
+  constructor(
+    public instanceUrl: string | undefined,
+    /** When web login is invoked programmatically (e.g. access-token re-auth), reuse this alias or username so the new auth replaces the same target-org label. */
+    public readonly reauthAliasOrUsername?: string
+  ) {}
 
   public async gather(): Promise<CancelResponse | ContinueResponse<AuthParams>> {
     const skipAlias = this.instanceUrl !== undefined;
     // allow passing in the instance url programmatically instead of via quick pick
     if (!this.instanceUrl) {
-      const orgTypes = buildOrgTypes(
-        await getOrgRuntime().runPromise(getProjectLoginUrl)
-      );
+      const orgTypes = buildOrgTypes(await getOrgRuntime().runPromise(getProjectLoginUrl));
       const selection = await vscode.window.showQuickPick(Object.values(orgTypes));
       if (!selection) {
         return { type: 'CANCEL' };
@@ -121,8 +123,11 @@ export class AuthParamsGatherer implements ParametersGatherer<AuthParams> {
       }
     }
 
+    const reauthLabel = this.reauthAliasOrUsername?.trim();
     const alias = skipAlias
-      ? `reauth-${DEFAULT_ALIAS}`
+      ? reauthLabel && reauthLabel.length > 0
+        ? reauthLabel
+        : `reauth-${DEFAULT_ALIAS}`
       : await vscode.window.showInputBox({
           prompt: nls.localize('parameter_gatherer_enter_alias_name'),
           placeHolder: DEFAULT_ALIAS

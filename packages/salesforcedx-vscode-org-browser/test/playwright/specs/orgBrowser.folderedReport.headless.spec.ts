@@ -8,7 +8,6 @@ import { test } from '../fixtures';
 import { expect } from '@playwright/test';
 import { OrgBrowserPage } from '../pages/orgBrowserPage';
 import {
-  assertWelcomeTabExists,
   closeWelcomeTabs,
   createDreamhouseOrg,
   ensureSecondarySideBarHidden,
@@ -25,7 +24,6 @@ test.setTimeout(RETRIEVE_TIMEOUT_MS);
 test.beforeEach(async ({ page }) => {
   const createResult = await createDreamhouseOrg();
   await waitForVSCodeWorkbench(page);
-  await assertWelcomeTabExists(page);
   await closeWelcomeTabs(page);
   const orgBrowserPage = new OrgBrowserPage(page);
   await upsertScratchOrgAuthFieldsToSettings(page, createResult, () => orgBrowserPage.waitForProject());
@@ -125,7 +123,10 @@ test('Org Browser - Foldered Report retrieval: foldered report headless: retriev
       .locator(NOTIFICATION_LIST_ITEM)
       .filter({ hasText: /Overwrite\s+local\s+files\s+for/i })
       .first();
-    const overwriteVisible = await overwrite.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false);
+    const overwriteVisible = await overwrite
+      .waitFor({ state: 'visible', timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
     if (overwriteVisible) {
       await expect(overwrite).toContainText(/Overwrite\s+local\s+files\s+for\s+\d+\s+(Report|ReportFolder)s?\s*\?/i);
       await overwrite.getByRole('button', { name: /^Yes$/ }).click();

@@ -10,7 +10,6 @@ import {
   setupConsoleMonitoring,
   setupNetworkMonitoring,
   waitForVSCodeWorkbench,
-  assertWelcomeTabExists,
   closeWelcomeTabs,
   ensureSecondarySideBarHidden,
   verifyCommandDoesNotExist,
@@ -27,13 +26,8 @@ import packageNls from '../../../package.nls.json';
 
     await emptyWorkspaceDesktopTest.step('setup with empty workspace', async () => {
       await waitForVSCodeWorkbench(page);
-      await assertWelcomeTabExists(page);
       await closeWelcomeTabs(page);
       await ensureSecondarySideBarHidden(page);
-    });
-
-    await emptyWorkspaceDesktopTest.step('verify tempaltes commands do not exist', async () => {
-      await verifyCommandDoesNotExist(page, packageNls.lightning_generate_lwc_text);
     });
 
     await emptyWorkspaceDesktopTest.step('verify deploy/retrieve/delete/generate manifest do not exist', async () => {

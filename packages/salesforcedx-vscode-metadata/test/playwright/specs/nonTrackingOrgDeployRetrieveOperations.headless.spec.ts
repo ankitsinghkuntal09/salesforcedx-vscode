@@ -11,7 +11,6 @@ import {
   setupConsoleMonitoring,
   setupNetworkMonitoring,
   waitForVSCodeWorkbench,
-  assertWelcomeTabExists,
   closeWelcomeTabs,
   createNonTrackingOrg,
   upsertScratchOrgAuthFieldsToSettings,
@@ -47,7 +46,6 @@ import { DEPLOY_TIMEOUT, RETRIEVE_TIMEOUT } from '../../constants';
     await test.step('setup non-tracking org', async () => {
       const createResult = await createNonTrackingOrg();
       await waitForVSCodeWorkbench(page);
-      await assertWelcomeTabExists(page);
       await closeWelcomeTabs(page);
       await ensureSecondarySideBarHidden(page);
 
@@ -86,7 +84,7 @@ import { DEPLOY_TIMEOUT, RETRIEVE_TIMEOUT } from '../../constants';
         throw new Error(`Deploy failed with error notification: ${errorText}`);
       }
 
-      await waitForOutputChannelText(page, { expectedText: 'deployed', timeout: 30_000 });
+      await waitForOutputChannelText(page, { expectedText: 'Deployed Source', timeout: 30_000 });
     });
 
     await test.step('retrieve class from org', async () => {
@@ -98,7 +96,7 @@ import { DEPLOY_TIMEOUT, RETRIEVE_TIMEOUT } from '../../constants';
       await executeCommandWithCommandPalette(page, packageNls.retrieve_this_source_text);
 
       await waitForOutputChannelText(page, { expectedText: 'Retrieving', timeout: 30_000 });
-      await waitForOutputChannelText(page, { expectedText: 'retrieved', timeout: RETRIEVE_TIMEOUT });
+      await waitForOutputChannelText(page, { expectedText: 'Retrieved Source', timeout: RETRIEVE_TIMEOUT });
     });
 
     await test.step('delete class from org', async () => {
@@ -121,7 +119,7 @@ import { DEPLOY_TIMEOUT, RETRIEVE_TIMEOUT } from '../../constants';
       await deleteButton.click();
 
       await waitForOutputChannelText(page, { expectedText: 'Deleting', timeout: 30_000 });
-      await waitForOutputChannelText(page, { expectedText: 'deployed', timeout: DEPLOY_TIMEOUT });
+      await waitForOutputChannelText(page, { expectedText: 'Deleted Source', timeout: DEPLOY_TIMEOUT });
 
       // Verify file was deleted from local filesystem (delete from org also deletes from project)
       await expect(async () => {

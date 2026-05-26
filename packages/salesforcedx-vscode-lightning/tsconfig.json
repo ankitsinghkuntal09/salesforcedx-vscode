@@ -3,29 +3,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "out",
-    "types": [
-      "jest",
-      "node",
-      "vscode"
-    ]
+    "types": ["jest", "node", "vscode"]
   },
-  "exclude": [
-    "node_modules",
-    ".vscode-test",
-    "out"
-  ],
-  "references": [
-    {
-      "path": "../salesforcedx-aura-language-server"
-    },
-    {
-      "path": "../salesforcedx-lightning-lsp-common"
-    },
-    {
-      "path": "../salesforcedx-utils-vscode"
-    },
-    {
-      "path": "../salesforcedx-vscode-i18n"
-    }
-  ]
+  "include": ["src/**/*.ts"]
 }

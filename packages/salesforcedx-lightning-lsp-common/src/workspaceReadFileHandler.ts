@@ -9,6 +9,7 @@ import type { FileStat, DirectoryEntry } from './types/fileSystemTypes';
 import { getServicesApi } from '@salesforce/effect-ext-utils';
 import * as Effect from 'effect/Effect';
 import * as vscode from 'vscode';
+import { URI, Utils } from 'vscode-uri';
 import {
   WORKSPACE_READ_FILE_REQUEST,
   WORKSPACE_STAT_REQUEST,
@@ -33,7 +34,7 @@ const isVscodeFileStat = (x: unknown): x is vscode.FileStat =>
   typeof x === 'object' && x !== null && 'type' in x && 'ctime' in x && 'mtime' in x && 'size' in x;
 
 /** Client that can handle LSP requests (Node or Browser LanguageClient). */
-export type WorkspaceReadFileClient = {
+type WorkspaceReadFileClient = {
   onRequest<P, R>(method: string, handler: (params: P) => Promise<R>): void;
 };
 
@@ -74,7 +75,7 @@ export const registerWorkspaceReadFileHandler = (
   const log = outputChannel ?? { appendLine: () => {} };
 
   const handleReadFile = Effect.fn('WorkspaceHandler.readFile')(function* (params: WorkspaceReadFileParams) {
-    const { uri } = params;
+    const uri = URI.revive(params.uri);
     yield* logTo(log, `[readFile] request uri=${uri.toString()}`);
     const fs = yield* getFs;
     const content = yield* fs.readFile(uri);
@@ -83,11 +84,11 @@ export const registerWorkspaceReadFileHandler = (
   });
 
   const handleStat = Effect.fn('WorkspaceHandler.stat')(function* (params: WorkspaceStatParams) {
-    const { uri } = params;
+    const uri = URI.revive(params.uri);
     yield* logTo(log, `[stat] request uri=${uri.toString()}`);
     const fs = yield* getFs;
     const vstat = yield* fs.stat(uri.toString());
-    if (!isVscodeFileStat(vstat)) yield* Effect.fail(new Error('Invalid stat result'));
+    if (!isVscodeFileStat(vstat)) return yield* Effect.fail(new Error('Invalid stat result'));
     const stat = vscodeStatToFileStat(vstat);
     yield* logTo(log, `[stat] success uri=${uri.toString()} type=${stat.type} size=${stat.size}`);
     return { stat };
@@ -96,13 +97,13 @@ export const registerWorkspaceReadFileHandler = (
   const handleReadDirectory = Effect.fn('WorkspaceHandler.readDirectory')(function* (
     params: WorkspaceReadDirectoryParams
   ) {
-    const { uri } = params;
+    const uri = URI.revive(params.uri);
     yield* logTo(log, `[readDirectory] request uri=${uri.toString()}`);
     const entries = yield* Effect.tryPromise(() => vscode.workspace.fs.readDirectory(uri));
     const result: DirectoryEntry[] = entries.map(([name, fileType]) => ({
       name,
       type: vscodeFileTypeToStatType(fileType),
-      uri: vscode.Uri.joinPath(uri, name).toString()
+      uri: Utils.joinPath(uri, name).toString()
     }));
     yield* logTo(log, `[readDirectory] success uri=${uri.toString()} entries=${result.length}`);
     return { entries: result };
@@ -110,11 +111,11 @@ export const registerWorkspaceReadFileHandler = (
 
   const handleFindFiles = Effect.fn('WorkspaceHandler.findFiles')(function* (params: WorkspaceFindFilesParams) {
     const { baseFolderUri, pattern } = params;
-    const baseUri = vscode.Uri.parse(baseFolderUri);
+    const baseUri = URI.parse(baseFolderUri);
     yield* logTo(log, `[findFiles] request baseFolderUri=${baseFolderUri} pattern=${pattern} scheme=${baseUri.scheme}`);
     const fs = yield* getFs;
     const uris = yield* fs.findFiles(new vscode.RelativePattern(baseUri, pattern));
-    const urisStr = uris.map((u: vscode.Uri) => u.toString());
+    const urisStr = uris.map((u: URI) => u.toString());
     yield* logTo(log, `[findFiles] success pattern=${pattern} uris=${urisStr.length}`);
     return { uris: urisStr };
   });
@@ -145,7 +146,7 @@ export const registerWorkspaceReadFileHandler = (
       Effect.catchAll(e =>
         Effect.sync(() => {
           log.appendLine(
-            `[stat] error uri=${params.uri.toString()}: ${errorMessage(e) || `(no message) left=${JSON.stringify(e)}`}`
+            `[stat] error uri=${JSON.stringify(params.uri)}: ${errorMessage(e) || `(no message) left=${JSON.stringify(e)}`}`
           );
           return { error: errorMessage(e) || 'Unknown stat error' };
         })

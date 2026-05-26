@@ -12,6 +12,7 @@ import * as Schema from 'effect/Schema';
 import * as vscode from 'vscode';
 import { URI } from 'vscode-uri';
 
+/** @ExportTaggedError See docs on TS4023 errors for more information about why this is needed*/
 export class NoFilesRetrievedError extends Schema.TaggedError<NoFilesRetrievedError>()('NoFilesRetrievedError', {
   message: Schema.String
 }) {}
@@ -31,7 +32,7 @@ const retrieve = Effect.fn('OrgBrowserRetrieveService.retrieve')(function* (
   yield* channel.appendToChannel(`Retrieve completed. ${fileResponses.length} files retrieved successfully.`);
   if (fileResponses.length > 0) {
     yield* channel.appendToChannel(
-      `Retrieved files: ${fileResponses!.map(f => `  - ${f.filePath} : ${f.fullName}`).join('\n')}`
+      `${['Retrieved files: '].concat(fileResponses!.map(f => `  - ${f.filePath} : ${f.type}`)).join('\n')}`
     );
   } else {
     return yield* Effect.fail(new NoFilesRetrievedError({ message: 'No files retrieved' }));

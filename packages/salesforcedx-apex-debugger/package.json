@@ -13,7 +13,7 @@
     "Debuggers"
   ],
   "dependencies": {
-    "@salesforce/core": "^8.28.0",
+    "@salesforce/core": "^8.31.0",
     "@salesforce/salesforcedx-utils": "*",
     "@salesforce/vscode-i18n": "*",
     "@vscode/debugadapter": "1.68.0",
@@ -27,12 +27,7 @@
   },
   "devDependencies": {
     "@types/async-lock": "1.4.2",
-    "@types/sinon": "^2.3.7",
     "@vscode/debugadapter-testsupport": "1.68.0",
-    "chai": "^4.0.2",
-    "mocha": "^10",
-    "mocha-junit-reporter": "^1.23.3",
-    "sinon": "^13.0.1",
     "vscode-uri": "^3.1.0"
   },
   "scripts": {
@@ -40,11 +35,12 @@
     "compile": "wireit",
     "lint": "wireit",
     "clean": "shx rm -rf node_modules out dist coverage .nyc_output .wireit .eslintcache",
-    "test": "wireit"
+    "test": "wireit",
+    "test:compile": "wireit"
   },
   "wireit": {
     "compile": {
-      "command": "tsc --build --pretty",
+      "command": "tsc --pretty",
       "clean": "if-file-deleted",
       "dependencies": [
         "../salesforcedx-utils:compile",
@@ -52,15 +48,24 @@
       ],
       "files": [
         "src/**/*.ts",
-        "test/**/*.ts",
         "tsconfig.json",
         "../../tsconfig.common.json",
         "package.json"
       ],
       "output": [
-        "out/**",
-        "tsconfig.tsbuildinfo"
+        "out/**"
       ]
+    },
+    "test:compile": {
+      "command": "tsc -p test/tsconfig.json",
+      "dependencies": [
+        "compile"
+      ],
+      "files": [
+        "test/**/*.ts",
+        "test/tsconfig.json"
+      ],
+      "output": []
     },
     "bundle:debugger": {
       "command": "node ../../scripts/bundling/bundle-debugger.mjs",
@@ -77,12 +82,11 @@
       ]
     },
     "test": {
-      "command": "jest --coverage --forceExit",
+      "command": "jest --forceExit",
       "dependencies": [
-        "compile"
+        "test:compile"
       ],
       "files": [
-        "src/**/*.ts",
         "test/**/*.ts",
         "jest.config.js",
         "../../config/jest.base.config.js"
@@ -94,7 +98,8 @@
     "lint": {
       "command": "eslint --color --cache --cache-location .eslintcache .",
       "dependencies": [
-        "../eslint-local-rules:compile"
+        "../eslint-local-rules:compile",
+        "compile"
       ],
       "files": [
         "src/**/*.ts",
@@ -105,11 +110,5 @@
       ],
       "output": []
     }
-  },
-  "nyc": {
-    "reporter": [
-      "text-summary",
-      "lcov"
-    ]
   }
 }

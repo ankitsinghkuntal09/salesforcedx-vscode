@@ -4,33 +4,35 @@
  * Licensed under the BSD 3-Clause license.
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
-import { TimingUtils } from '@salesforce/salesforcedx-utils-vscode';
+import * as Option from 'effect/Option';
 import { escapeStrForRegex } from 'jest-regex-util';
 import * as path from 'node:path';
-import * as uuid from 'uuid';
 import * as vscode from 'vscode';
 import { nls } from '../../messages';
+import { getRuntime } from '../../services/runtime';
 import { telemetryService } from '../../telemetry';
-import { isTestCaseInfo, TestExecutionInfo, TestInfoKind } from '../types';
+import { isTestCaseInfo, TestExecutionInfo } from '../types';
 import { workspace, workspaceService } from '../workspace';
 import { SfTask, taskService } from './taskService';
 import { testResultsWatcher } from './testResultsWatcher';
 
-export const enum TestRunType {
-  RUN = 'run',
-  DEBUG = 'debug',
-  WATCH = 'watch'
-}
+export type TestRunType = 'run' | 'debug' | 'watch';
 
 /**
- * Returns relative path for Jest runTestsByPath on Windows
- * or absolute path on other systems
- * @param cwd
- * @param testFsPath
+ * Returns the path to pass to Jest's --runTestsByPath.
+ * On Windows, relative paths are required. On macOS, /var/folders is a symlink to
+ * /private/var/folders; Jest resolves rootDir via realpathSync so the path must use
+ * the realpath prefix. Strip the leading /private prefix via string replacement rather
+ * than fs.realpathSync (which is banned for web-extension compatibility).
  */
 const normalizeRunTestsByPath = (cwd: string, testFsPath: string) => {
   if (process.platform.startsWith('win32')) {
     return path.relative(cwd, testFsPath);
+  }
+  // /var/folders on macOS is a fixed symlink to /private/var/folders.
+  // Add /private prefix so the path matches Jest's realpathSync-resolved rootDir.
+  if (process.platform === 'darwin' && testFsPath.startsWith('/var/')) {
+    return `/private${testFsPath}`;
   }
   return testFsPath;
 };
@@ -61,7 +63,7 @@ export class TestRunner {
    * @param logName Telemetry log name. If specified we will send command telemetry event when task finishes
    */
   constructor(testExecutionInfo: TestExecutionInfo, testRunType: TestRunType, logName?: string) {
-    this.testRunId = uuid.v4();
+    this.testRunId = globalThis.crypto.randomUUID();
     this.testExecutionInfo = testExecutionInfo;
     this.testRunType = testRunType;
     this.logName = logName;
@@ -75,13 +77,13 @@ export class TestRunner {
     const { testRunId, testRunType, testExecutionInfo } = this;
     const { kind, testUri } = testExecutionInfo;
     const { fsPath: testFsPath } = testUri;
-    const tempFolder = await testResultsWatcher.getTempFolder(workspaceFolder, testExecutionInfo);
+    const tempFolder = await testResultsWatcher.getTempFolder(workspaceFolder);
 
     const testResultFileName = `test-result-${testRunId}.json`;
     const outputFilePath = path.join(tempFolder, testResultFileName);
     // Specify --runTestsByPath if running test on individual files
     let runTestsByPathArgs: string[];
-    if (kind === TestInfoKind.TEST_FILE || kind === TestInfoKind.TEST_CASE) {
+    if (kind === 'testFile' || kind === 'testCase') {
       const workspaceFolderFsPath = workspaceFolder.uri.fsPath;
       runTestsByPathArgs = ['--runTestsByPath', normalizeRunTestsByPath(workspaceFolderFsPath, testFsPath)];
     } else {
@@ -92,7 +94,7 @@ export class TestRunner {
         ? getTestNamePatternArgs(testExecutionInfo.testName)
         : [];
 
-    const runModeArgs = testRunType === TestRunType.WATCH ? ['--watch'] : [];
+    const runModeArgs = testRunType === 'watch' ? ['--watch'] : [];
     const args = [
       ...runModeArgs,
       '--json',
@@ -118,12 +120,12 @@ export class TestRunner {
       if (jestExecutionInfo) {
         const { jestArgs, jestOutputFilePath } = jestExecutionInfo;
         const cwd = workspaceFolder.uri.fsPath;
-        const lwcTestRunnerExecutable = await workspace.getLwcTestRunnerExecutable(cwd);
+        const result = await getRuntime().runPromise(workspace.getLwcTestRunnerExecutable(cwd));
         const cliArgs: string[] = workspace.getCliArgsFromJestArgs(jestArgs, this.testRunType);
-        if (lwcTestRunnerExecutable) {
+        if (Option.isSome(result)) {
           return {
             workspaceFolder,
-            command: lwcTestRunnerExecutable,
+            command: result.value,
             args: cliArgs,
             testResultFsPath: jestOutputFilePath
           };
@@ -143,9 +145,9 @@ export class TestRunner {
   private getTaskName() {
     // Only run and watch uses tasks for execution
     switch (this.testRunType) {
-      case TestRunType.RUN:
+      case 'run':
         return nls.localize('run_test_task_name');
-      case TestRunType.WATCH:
+      case 'watch':
         return nls.localize('watch_test_task_name');
       default:
         return nls.localize('default_task_name');
@@ -164,11 +166,14 @@ export class TestRunner {
       const taskName = this.getTaskName();
       const sfTask = taskService.createTask(this.testRunId, taskName, workspaceFolder, command, args);
       if (this.logName) {
-        const startTime = TimingUtils.getCurrentTime();
+        const logName = this.logName;
+        const startTime = globalThis.performance.now();
         sfTask.onDidEnd(() => {
-          telemetryService.sendCommandEvent(this.logName, startTime, {
-            workspaceType: workspaceService.getCurrentWorkspaceTypeForTelemetry()
-          });
+          telemetryService.sendEventData(
+            logName,
+            { workspaceType: workspaceService.getCurrentWorkspaceTypeForTelemetry() },
+            { executionTime: globalThis.performance.now() - startTime }
+          );
         });
       }
       return sfTask.execute();

@@ -11,7 +11,6 @@ import {
   setupConsoleMonitoring,
   setupNetworkMonitoring,
   waitForVSCodeWorkbench,
-  assertWelcomeTabExists,
   closeWelcomeTabs,
   createMinimalOrg,
   upsertScratchOrgAuthFieldsToSettings,
@@ -27,7 +26,7 @@ import {
   selectOutputChannel,
   waitForOutputChannelText,
   EDITOR,
-  QUICK_INPUT_WIDGET,
+  activeQuickInputWidget,
   NOTIFICATION_LIST_ITEM,
   ensureSecondarySideBarHidden
 } from '@salesforce/playwright-vscode-ext';
@@ -51,7 +50,6 @@ test.setTimeout(RETRIEVE_TIMEOUT);
     await test.step('setup minimal org', async () => {
       const createResult = await createMinimalOrg();
       await waitForVSCodeWorkbench(page);
-      await assertWelcomeTabExists(page);
       await closeWelcomeTabs(page);
       await ensureSecondarySideBarHidden(page);
       await saveScreenshot(page, 'setup.after-workbench.png');
@@ -75,9 +73,9 @@ test.setTimeout(RETRIEVE_TIMEOUT);
       await executeCommandWithCommandPalette(page, packageNls.project_generate_manifest_text);
 
       // Wait for input prompt
-      const quickInput = page.locator(QUICK_INPUT_WIDGET);
-      await quickInput.waitFor({ state: 'visible', timeout: 10_000 });
-      await quickInput.getByText(messages.manifest_input_save_prompt).waitFor({ state: 'visible', timeout: 10_000 });
+      const quickInput = activeQuickInputWidget(page);
+      await quickInput.waitFor({ state: 'attached', timeout: 10_000 });
+      await quickInput.getByText(messages.manifest_input_save_prompt).waitFor({ state: 'attached', timeout: 10_000 });
 
       // Accept default filename (package.xml) by pressing Enter
       await page.keyboard.press('Enter');
@@ -135,7 +133,7 @@ test.setTimeout(RETRIEVE_TIMEOUT);
 
       // Verify retrieve starts and completes via output channel
       await waitForOutputChannelText(page, { expectedText: 'Retrieving', timeout: 30_000 });
-      await waitForOutputChannelText(page, { expectedText: 'retrieved', timeout: RETRIEVE_TIMEOUT });
+      await waitForOutputChannelText(page, { expectedText: 'Retrieved Source', timeout: RETRIEVE_TIMEOUT });
     });
 
     await test.step('2. Explorer context menu (file)', async () => {
@@ -151,7 +149,7 @@ test.setTimeout(RETRIEVE_TIMEOUT);
 
       // Verify retrieve starts and completes via output channel
       await waitForOutputChannelText(page, { expectedText: 'Retrieving', timeout: 30_000 });
-      await waitForOutputChannelText(page, { expectedText: 'retrieved', timeout: RETRIEVE_TIMEOUT });
+      await waitForOutputChannelText(page, { expectedText: 'Retrieved Source', timeout: RETRIEVE_TIMEOUT });
     });
 
     await validateNoCriticalErrors(test, consoleErrors, networkErrors);

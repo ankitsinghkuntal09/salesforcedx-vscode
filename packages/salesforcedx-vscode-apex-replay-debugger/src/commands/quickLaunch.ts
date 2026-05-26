@@ -14,6 +14,7 @@ import {
   TestService
 } from '@salesforce/apex-node';
 import type { Connection } from '@salesforce/core';
+import { ExtensionProviderService } from '@salesforce/effect-ext-utils';
 import {
   ContinueResponse,
   LibraryCommandletExecutor,
@@ -21,13 +22,13 @@ import {
   projectPaths,
   workspaceUtils
 } from '@salesforce/salesforcedx-utils-vscode';
+import * as Effect from 'effect/Effect';
 import * as path from 'node:path';
-import type { SalesforceVSCodeCoreApi } from 'salesforcedx-vscode-core';
-import * as vscode from 'vscode';
 import { checkpointService, sfCreateCheckpoints } from '../breakpoints/checkpointService';
 import { OUTPUT_CHANNEL } from '../channels';
 import { nls } from '../messages';
 import { ensureTraceFlagsForCurrentUser } from '../services/ensureTraceFlags';
+import { getRuntime } from '../services/runtime';
 import { retrieveTestCodeCoverage } from '../utils/settings';
 import { launchFromLogFile } from './launchFromLogFile';
 
@@ -44,10 +45,12 @@ type LogFileRetrieveResult = {
 
 class QuickLaunch {
   public async debugTest(testClass: string, testName?: string): Promise<boolean> {
-    const connection = await vscode.extensions
-      .getExtension<SalesforceVSCodeCoreApi>('salesforce.salesforcedx-vscode-core')
-      ?.exports.services.WorkspaceContext.getInstance()
-      .getConnection();
+    const connection = await getRuntime().runPromise(
+      Effect.gen(function* () {
+        const api = yield* (yield* ExtensionProviderService).getServicesApi;
+        return yield* api.services.ConnectionService.getConnection();
+      })
+    );
 
     if (!connection) {
       return false;
@@ -82,10 +85,11 @@ class QuickLaunch {
   private async runTests(connection: Connection, testClass: string, testMethod?: string): Promise<TestRunResult> {
     const testService = new TestService(connection);
     try {
+      const singleTestName = testMethod ? `${testClass}.${testMethod}` : undefined;
       const payload = await testService.buildSyncPayload(
         TestLevel.RunSpecifiedTests,
-        testMethod ? `${testClass}.${testMethod}` : undefined,
-        testClass,
+        singleTestName,
+        singleTestName ? undefined : testClass,
         undefined,
         !retrieveTestCodeCoverage() // the setting enables code coverage, so we need to pass false to disable it
       );
@@ -107,14 +111,16 @@ class QuickLaunch {
           message: nls.localize('debug_test_no_results_found')
         };
       }
-      if (!tests[0].apexLogId) {
+
+      const testResult = testMethod ? (tests.find(test => test.methodName === testMethod) ?? tests[0]) : tests[0];
+      if (!testResult?.apexLogId) {
         return {
           success: false,
           message: nls.localize('debug_test_no_debug_log')
         };
       }
 
-      return { logFileId: tests[0].apexLogId, success: true };
+      return { logFileId: testResult.apexLogId, success: true };
     } catch (e) {
       return { message: e.message, success: false };
     }

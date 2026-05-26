@@ -33,10 +33,18 @@ const copyTemplates = copy({
   resolveFrom: 'cwd',
   globbyOptions: { dot: true },
   assets: [
+    { from: [`${templatesBase}/analytics/**/*`], to: ['./dist/templates/analytics'] },
     { from: [`${templatesBase}/apexclass/**/*`], to: ['./dist/templates/apexclass'] },
     { from: [`${templatesBase}/apextrigger/**/*`], to: ['./dist/templates/apextrigger'] },
+    { from: [`${templatesBase}/lightningapp/**/*`], to: ['./dist/templates/lightningapp'] },
     { from: [`${templatesBase}/lightningcomponent/lwc/**/*`], to: ['./dist/templates/lightningcomponent/lwc'] },
-    { from: [`${templatesBase}/staticresource/**/*`], to: ['./dist/templates/staticresource'] }
+    { from: [`${templatesBase}/lightningcomponent/aura/**/*`], to: ['./dist/templates/lightningcomponent/aura'] },
+    { from: [`${templatesBase}/lightningevent/**/*`], to: ['./dist/templates/lightningevent'] },
+    { from: [`${templatesBase}/lightninginterface/**/*`], to: ['./dist/templates/lightninginterface'] },
+    { from: [`${templatesBase}/project/**/*`], to: ['./dist/templates/project'] },
+    { from: [`${templatesBase}/staticresource/**/*`], to: ['./dist/templates/staticresource'] },
+    { from: [`${templatesBase}/visualforcepage/**/*`], to: ['./dist/templates/visualforcepage'] },
+    { from: [`${templatesBase}/visualforcecomponent/**/*`], to: ['./dist/templates/visualforcecomponent'] }
   ]
 });
 
@@ -52,7 +60,7 @@ const generateTemplatesManifest = async () => {
   const prefix = distTemplates.replace(/\\/g, '/') + '/';
   const paths = (await readdir(distTemplates, { recursive: true, withFileTypes: true }))
     .filter(e => e.isFile() && e.name !== 'manifest.json')
-    .map(e => `${e.path.replace(/\\/g, '/')}/${e.name}`.replace(prefix, ''));
+    .map(e => `${(e.parentPath ?? e.path).replace(/\\/g, '/')}/${e.name}`.replace(prefix, ''));
 
   await writeFile(join(distTemplates, 'manifest.json'), JSON.stringify(paths));
   console.log(`[esbuild] Generated templates manifest: ${paths.length} files`);
@@ -64,21 +72,28 @@ const repoRoot = join(packageDir, '../..');
 // Derive section and keys from package.json contributes.configuration.properties
 
 const buildWebConfig = async () => {
-  const configMap = {};
-
   if (process.env.ESBUILD_WEB_ORG_ALIAS) {
+    const configMap = {};
+
     try {
       const { stdout } = await execAsync(`sf org display -o ${process.env.ESBUILD_WEB_ORG_ALIAS} --json`, {
         env: { ...process.env, NO_COLOR: '1' }
       });
       const orgDisplayResponse = JSON.parse(stdout);
       const orgData = orgDisplayResponse.result;
-      const ORG_DISPLAY_KEYS = ['instanceUrl', 'accessToken', 'apiVersion'];
+      const ORG_DISPLAY_KEYS = ['instanceUrl', 'apiVersion'];
 
-      if (ORG_DISPLAY_KEYS.every(k => orgData[k])) {
-        ORG_DISPLAY_KEYS.forEach(key => {
+      const { stdout: tokenStdout } = await execAsync(
+        `sf org auth show-access-token -o ${process.env.ESBUILD_WEB_ORG_ALIAS} --json`,
+        { env: { ...process.env, NO_COLOR: '1' } }
+      );
+      orgData.accessToken = JSON.parse(tokenStdout).result.accessToken;
+
+      const ALL_KEYS = [...ORG_DISPLAY_KEYS, 'accessToken'];
+      if (ALL_KEYS.every(k => orgData[k])) {
+        ALL_KEYS.forEach(key => {
           const fullKey = Object.keys(pkg.contributes?.configuration?.properties ?? {})
-            .filter(k => ORG_DISPLAY_KEYS.includes(k.split('.')[1]))
+            .filter(k => ALL_KEYS.includes(k.split('.')[1]))
             .find(k => k.endsWith(`.${key}`));
           if (fullKey) configMap[fullKey] = orgData[key];
         });
@@ -88,26 +103,25 @@ const buildWebConfig = async () => {
       console.error(`[esbuild] Failed to get web config from org ${process.env.ESBUILD_WEB_ORG_ALIAS}:`, error.message);
       throw error;
     }
-  }
 
-  // Enable file traces — span files in ~/.sf/vscode-spans/
-  configMap['salesforcedx-vscode-salesforcedx.enableFileTraces'] = true;
+    // Enable file traces — span files in ~/.sf/vscode-spans/
+    configMap['salesforcedx-vscode-salesforcedx.enableFileTraces'] = true;
 
-  // Read extra settings if ESBUILD_WEB_LOCAL is set
-  if (process.env.ESBUILD_WEB_LOCAL) {
-    const extraSettingsPath = join(repoRoot, '.esbuild-web-extra-settings.json');
-    if (existsSync(extraSettingsPath)) {
-      try {
-        const extraSettingsContent = await readFile(extraSettingsPath, 'utf-8');
-        const extraSettings = JSON.parse(extraSettingsContent);
-        Object.assign(configMap, extraSettings);
-      } catch (error) {
-        console.warn(`Failed to read extra settings: ${error.message}`);
+    // Read extra settings if ESBUILD_WEB_LOCAL is set
+    if (process.env.ESBUILD_WEB_LOCAL) {
+      const extraSettingsPath = join(repoRoot, '.esbuild-web-extra-settings.json');
+      if (existsSync(extraSettingsPath)) {
+        try {
+          const extraSettingsContent = await readFile(extraSettingsPath, 'utf-8');
+          const extraSettings = JSON.parse(extraSettingsContent);
+          Object.assign(configMap, extraSettings);
+        } catch (error) {
+          console.warn(`Failed to read extra settings: ${error.message}`);
+        }
       }
     }
+    return JSON.stringify(configMap);
   }
-
-  return Object.keys(configMap).length > 0 ? JSON.stringify(configMap) : undefined;
 };
 
 // Desktop build (Node.js environment)

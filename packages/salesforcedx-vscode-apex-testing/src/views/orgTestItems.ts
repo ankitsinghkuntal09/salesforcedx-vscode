@@ -10,8 +10,8 @@ import * as Array from 'effect/Array';
 import * as vscode from 'vscode';
 import type { URI } from 'vscode-uri';
 import { LOCAL_NAMESPACE_KEY, UNPACKAGED_PACKAGE_ID, UNPACKAGED_PACKAGE_KEY } from '../constants';
+import { getApexTestingClassUri } from '../discoveryVfs/apexTestingDiscoveryFs';
 import { nls } from '../messages';
-import { createOrgApexClassUri } from '../utils/orgApexClassProvider';
 import { createClassId, createMethodId, createPackageId } from '../utils/testItemUtils';
 import { getFullClassName } from '../utils/testUtils';
 
@@ -160,7 +160,12 @@ export const getPackageLabelAndId = (
   const firstClass = classEntriesList[0].entries[0];
   const info = firstClass.id ? classIdToPackage.get(firstClass.id) : undefined;
   const baseName = info?.packageName ?? pkgKey;
-  const packageLabel = info?.containerOptions === 'Unlocked' ? `${baseName} (Unlocked)` : baseName;
+  const packageLabel =
+    info?.containerOptions === 'Unlocked'
+      ? `${baseName} (Unlocked)`
+      : info?.containerOptions === 'Managed'
+        ? nls.localize('test_explorer_managed_package_label', baseName)
+        : baseName;
   return { packageLabel, packageId: createPackageId(nsKey, pkgKey) };
 };
 
@@ -172,6 +177,7 @@ interface CreateClassAndMethodsContext {
   classItems: Map<string, vscode.TestItem>;
   methodItems: Map<string, vscode.TestItem>;
   classNameToUri: Map<string, URI>;
+  orgKey: string;
   orgOnlyTag: vscode.TestTag | undefined;
   inWorkspaceTag: vscode.TestTag | undefined;
 }
@@ -184,15 +190,16 @@ interface CreateClassAndMethodsContext {
 export const createClassAndMethodsFactory = (
   ctx: CreateClassAndMethodsContext
 ): ((fullClassName: string, classEntries: Array.NonEmptyArray<ToolingTestClass>) => vscode.TestItem) => {
-  const { controller, classItems, methodItems, classNameToUri, orgOnlyTag, inWorkspaceTag } = ctx;
+  const { controller, classItems, methodItems, classNameToUri, orgKey, orgOnlyTag, inWorkspaceTag } = ctx;
 
   return (fullClassName: string, classEntries: Array.NonEmptyArray<ToolingTestClass>): vscode.TestItem => {
     const baseClassName = classEntries[0].name;
     const localUri = classNameToUri.get(baseClassName);
-    const uri = localUri ?? createOrgApexClassUri(baseClassName);
+    const uri = localUri ?? getApexTestingClassUri(orgKey, fullClassName);
     const isOrgOnly = !localUri;
 
     const classItem = controller.createTestItem(createClassId(fullClassName), baseClassName, uri);
+    classItem.canResolveChildren = true;
     if (isOrgOnly && orgOnlyTag) {
       classItem.tags = [orgOnlyTag];
     } else if (inWorkspaceTag) {

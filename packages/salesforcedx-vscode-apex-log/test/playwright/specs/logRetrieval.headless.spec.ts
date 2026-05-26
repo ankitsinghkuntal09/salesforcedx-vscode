@@ -13,9 +13,10 @@ import {
   ensureSecondarySideBarHidden,
   executeCommandWithCommandPalette,
   NOTIFICATION_LIST_ITEM,
-  QUICK_INPUT_LIST_ROW,
   QUICK_INPUT_WIDGET,
+  removeAllDebugLevels,
   saveScreenshot,
+  selectFirstQuickInputOption,
   setupConsoleMonitoring,
   setupMinimalOrgAndAuth,
   setupNetworkMonitoring,
@@ -39,6 +40,7 @@ test('Log retrieval: get logs, open folder', async ({ page }) => {
   await test.step('setup minimal org auth', async () => {
     await setupMinimalOrgAndAuth(page);
     await ensureSecondarySideBarHidden(page);
+    await removeAllDebugLevels(page);
   });
 
   await test.step('turn on trace flag (SOAP execAnon no longer creates trace; logGet needs ApexLog records)', async () => {
@@ -46,7 +48,10 @@ test('Log retrieval: get logs, open folder', async ({ page }) => {
 
     // Clean up any existing trace flags first (in case previous test failed to clean up)
     const statusBar = page.locator(APEX_TRACE_FLAG_STATUS_BAR);
-    const hasExistingTrace = await statusBar.filter({ hasText: /Tracing until/ }).isVisible().catch(() => false);
+    const hasExistingTrace = await statusBar
+      .filter({ hasText: /Tracing until/ })
+      .isVisible()
+      .catch(() => false);
     if (hasExistingTrace) {
       await executeCommandWithCommandPalette(page, packageNls['apexLog.command.traceFlagsDeleteForCurrentUser']);
       await waitForTraceFlagStatusBar(page, /No Tracing/);
@@ -92,16 +97,10 @@ test('Log retrieval: get logs, open folder', async ({ page }) => {
     await executeCommandWithCommandPalette(page, packageNls['apexLog.command.logGet']);
     const widget = page.locator(QUICK_INPUT_WIDGET);
     await expect(widget).toBeVisible({ timeout: 30_000 });
-    await waitForQuickInputFirstOption(page, {
+    await selectFirstQuickInputOption(page, {
       quickInputVisibleTimeout: 30_000,
       optionVisibleTimeout: 30_000,
       retryTimeout: 30_000
-    });
-    const firstAriaOption = widget.getByRole('option').first();
-    const firstRow = (await firstAriaOption.count()) > 0 ? firstAriaOption : widget.locator(QUICK_INPUT_LIST_ROW).first();
-    await firstRow.evaluate(el => {
-      el.scrollIntoView({ block: 'center', behavior: 'instant' });
-      (el as HTMLElement).click();
     });
     await saveScreenshot(page, 'log-retrieval.quick-pick.png');
   });

@@ -77,7 +77,6 @@ g.IDBOpenDBRequest = jest.fn() as unknown as typeof IDBOpenDBRequest;
 
 // Mock spansNode to avoid path.join issues
 jest.mock('../../src/observability/spansNode', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const E = require('effect');
   return {
     NodeSdkLayerFor: () => E.Layer.empty
@@ -87,7 +86,6 @@ jest.mock('../../src/observability/spansNode', () => {
 // Mock IndexedDB Storage Service
 jest.mock('../../src/virtualFsProvider/indexedDbStorage', () => {
   const originalModule = jest.requireActual('../../src/virtualFsProvider/indexedDbStorage');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const E = require('effect');
 
   const mockStorage = {
@@ -123,7 +121,6 @@ jest.mock('../../src/virtualFsProvider/fileSystemProvider', () => ({
 // Mock memfsWatcher to avoid file watching in tests
 jest.mock('../../src/virtualFsProvider/memfsWatcher', () => ({
   startWatch: () => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const E = require('effect');
     return E.Effect.succeed(undefined);
   },
@@ -133,31 +130,19 @@ jest.mock('../../src/virtualFsProvider/memfsWatcher', () => ({
   }
 }));
 
-// Mock FileWatcherService to avoid vscode.workspace.createFileSystemWatcher
+// Mock FileWatcherLayer to avoid vscode.workspace.createFileSystemWatcher
 jest.mock('../../src/vscode/fileWatcherService', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const EffectModule = require('effect/Effect');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const Layer = require('effect/Layer');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const Context = require('effect/Context');
-
-  const FileWatcherServiceTag = Context.GenericTag('FileWatcherService');
-
-  const mockPubSub = {
-    publish: jest.fn().mockReturnValue(EffectModule.succeed(undefined)),
-    subscribe: jest.fn()
-  };
-  const mockServiceImpl = {
-    pubsub: mockPubSub
-  };
-
-  const FileWatcherService = {
-    Default: Layer.succeed(FileWatcherServiceTag, mockServiceImpl)
-  };
-
+  const E = require('effect');
   return {
-    FileWatcherService
+    FileWatcherLayer: E.Layer.empty
+  };
+});
+
+// Mock SettingsWatcherLayer to avoid vscode.workspace.onDidChangeConfiguration
+jest.mock('../../src/vscode/settingsWatcherService', () => {
+  const E = require('effect');
+  return {
+    SettingsWatcherLayer: E.Layer.empty
   };
 });
 
@@ -215,7 +200,6 @@ const mockExtensionUri = URI.file('/mock/extension');
 describe('Extension', () => {
   beforeEach(() => {
     // Mock workspace.workspaceFolders to have at least one folder
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const vscode = require('vscode');
     vscode.extensions = {
       getExtension: jest.fn().mockReturnValue({ extensionUri: mockExtensionUri })

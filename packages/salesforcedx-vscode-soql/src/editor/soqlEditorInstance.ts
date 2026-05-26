@@ -5,6 +5,7 @@
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
 
+import type { MessageType } from '../soql-builder-ui/modules/querybuilder/services/message/soqlEditorEvent';
 import type { QueryResult, DescribeSObjectResult } from '../types';
 import { ExtensionProviderService, getServicesApi } from '@salesforce/effect-ext-utils';
 import type { JsonMap } from '@salesforce/ts-types';
@@ -70,23 +71,11 @@ type SoqlEditorEvent =
   | {
       type: 'get_query_plan';
       payload: never;
+    }
+  | {
+      type: 'set_default_org';
+      payload: never;
     };
-
-// TODO: This should be shared with soql-builder-ui
-type MessageType =
-  | 'ui_activated'
-  | 'ui_soql_changed'
-  | 'ui_telemetry'
-  | 'sobject_metadata_request'
-  | 'sobject_metadata_response'
-  | 'sobjects_request'
-  | 'sobjects_response'
-  | 'text_soql_changed'
-  | 'run_query'
-  | 'connection_changed'
-  | 'run_query_done'
-  | 'get_query_plan'
-  | 'get_query_plan_done';
 
 export class SOQLEditorInstance {
   public subscriptions: vscode.Disposable[] = [];
@@ -124,16 +113,15 @@ export class SOQLEditorInstance {
     );
     this.subscriptions.push({ dispose: () => Effect.runFork(Fiber.interrupt(messageFiber)) });
 
-    const { onConnectionChanged } = this;
+    const { onConnectionChanged, onNoDefaultOrg } = this;
     const connectionFiber = getSoqlRuntime().runFork(
       Effect.gen(function* () {
         const api = yield* (yield* ExtensionProviderService).getServicesApi;
         const targetOrgRef = yield* api.services.TargetOrgRef();
-        yield* targetOrgRef.changes.pipe(
-          Stream.tap(org => Effect.sync(() => console.log(`Target org changed to ${org.orgId ?? '<NOT SET>'}`))),
-          Stream.map(org => org.orgId),
+        yield* targetOrgRef.changes.pipe(Stream.as(undefined)).pipe(
+          Stream.mapEffect(() => Effect.promise(() => isDefaultOrgSet())),
           Stream.changes,
-          Stream.runForEach(() => onConnectionChanged())
+          Stream.runForEach(isOrgSet => (isOrgSet ? onConnectionChanged() : onNoDefaultOrg()))
         );
       })
     );
@@ -142,13 +130,8 @@ export class SOQLEditorInstance {
     webviewPanel.onDidDispose(this.dispose, this, this.subscriptions);
   }
 
-  protected sendMessageToUi(
-    type: MessageType,
-    payload?: string | string[] | DescribeSObjectResult
-  ) {
-    return Effect.promise<boolean>(
-      () => this.webviewPanel.webview.postMessage({ type, payload })
-    ).pipe(
+  protected sendMessageToUi(type: MessageType, payload?: string | string[] | DescribeSObjectResult) {
+    return Effect.promise<boolean>(() => this.webviewPanel.webview.postMessage({ type, payload })).pipe(
       Effect.asVoid,
       Effect.catchAllCause(cause =>
         appendToChannel(nls.localize('error_unknown_error', 'web_view_post_message')).pipe(
@@ -159,13 +142,12 @@ export class SOQLEditorInstance {
   }
 
   protected updateWebview(document: vscode.TextDocument) {
-    const self = this;
-    return Effect.gen(function* () {
-      if (self.pendingWebviewUpdate) {
-        self.pendingWebviewUpdate = false;
-        return;
+    return Effect.suspend(() => {
+      if (this.pendingWebviewUpdate) {
+        this.pendingWebviewUpdate = false;
+        return Effect.void;
       }
-      yield* self.sendMessageToUi('text_soql_changed', document.getText());
+      return this.sendMessageToUi('text_soql_changed', document.getText());
     });
   }
 
@@ -185,8 +167,13 @@ export class SOQLEditorInstance {
 
   private handleMessageEffect = (event: SoqlEditorEvent) => {
     switch (event.type) {
-      case 'ui_activated':
-        return this.updateWebview(this.document).pipe(Effect.withSpan('SOQLEditor.ui_activated'));
+      case 'ui_activated': {
+        return Effect.promise(() => isDefaultOrgSet()).pipe(
+          Effect.flatMap(isOrgSet => (isOrgSet ? Effect.void : this.sendMessageToUi('no_default_org'))),
+          Effect.andThen(this.updateWebview(this.document)),
+          Effect.withSpan('SOQLEditor.ui_activated')
+        );
+      }
 
       case 'ui_soql_changed': {
         const soql = event.payload;
@@ -202,43 +189,40 @@ export class SOQLEditorInstance {
       case 'ui_telemetry': {
         const { unsupported } = event.payload;
         const hasUnsupported = Array.isArray(unsupported) ? unsupported.length : unsupported;
-        return (
-          hasUnsupported
-            ? appendToChannel(nls.localize('info_syntax_unsupported'))
-            : Effect.void
-        ).pipe(Effect.withSpan('SOQLEditor.ui_telemetry'));
+        return (hasUnsupported ? appendToChannel(nls.localize('info_syntax_unsupported')) : Effect.void).pipe(
+          Effect.withSpan('SOQLEditor.ui_telemetry')
+        );
       }
 
       case 'sobject_metadata_request':
         return retrieveSObjectRawEffect(event.payload).pipe(
           Effect.flatMap(sobject => (sobject ? this.updateSObjectMetadata(sobject) : Effect.void)),
-          Effect.catchAll(() =>
-            appendToChannel(nls.localize('error_sobject_metadata_request', event.payload))
-          ),
+          Effect.catchAll(() => appendToChannel(nls.localize('error_sobject_metadata_request', event.payload))),
           Effect.withSpan('SOQLEditor.sobject_metadata_request', { attributes: { sobjectName: event.payload } })
         );
 
       case 'sobjects_request':
         return listSObjectNamesEffect.pipe(
           Effect.flatMap(names => (names ? this.updateSObjects(names) : Effect.void)),
-          Effect.catchAll(() =>
-            appendToChannel(nls.localize('error_sobjects_request'))
-          ),
+          Effect.catchAll(() => appendToChannel(nls.localize('error_sobjects_request'))),
           Effect.withSpan('SOQLEditor.sobjects_request')
         );
 
       case 'run_query': {
-        const self = this;
+        const runQueryDone = () => this.runQueryDone();
+        const { document } = this;
+        const openQueryDataView = (data: QueryResult<JsonMap>) => this.openQueryDataView(data);
+        const maxRows = vscode.workspace.getConfiguration('salesforcedx-vscode-soql').get<number>('maxQueryLimit');
         return Effect.gen(function* () {
           const isOrgSet = yield* Effect.promise(() => isDefaultOrgSet());
           if (!isOrgSet) {
             const message = nls.localize('info_no_default_org');
             yield* appendToChannel(message);
             yield* Effect.promise(() => vscode.window.showInformationMessage(message));
-            yield* self.runQueryDone();
+            yield* runQueryDone();
             return;
           }
-          const queryText = self.document.getText();
+          const queryText = document.getText();
           const conn = yield* Effect.promise(() => getConnection());
           const queryData = yield* Effect.promise(() =>
             vscode.window.withProgress(
@@ -247,51 +231,52 @@ export class SOQLEditorInstance {
                 location: vscode.ProgressLocation.Notification,
                 title: nls.localize('progress_running_query')
               },
-              () => runQuery(conn)(queryText)
+              () => runQuery(conn)(queryText, { maxRows })
             )
           );
-          yield* Effect.promise(() => self.openQueryDataView(queryData));
-          yield* self.runQueryDone();
+          yield* Effect.promise(() => openQueryDataView(queryData));
+          yield* runQueryDone();
         }).pipe(
           Effect.catchAllCause(cause => {
             const err = Cause.squash(cause);
-            return Effect.gen(function* () {
-              yield* appendToChannel(
-                nls.localize('error_run_soql_query', err instanceof Error ? err.message : String(err))
-              );
-              yield* self.runQueryDone();
-            });
+            return appendToChannel(
+              nls.localize('error_run_soql_query', err instanceof Error ? err.message : String(err))
+            ).pipe(Effect.andThen(this.runQueryDone()));
           }),
           Effect.withSpan('SOQLEditor.run_query')
         );
       }
 
       case 'get_query_plan': {
-        const self = this;
+        const getQueryPlanDone = () => this.getQueryPlanDone();
+        const { document } = this;
         return Effect.gen(function* () {
           const isOrgSet = yield* Effect.promise(() => isDefaultOrgSet());
           if (!isOrgSet) {
             const message = nls.localize('info_no_default_org');
             yield* appendToChannel(message);
             yield* Effect.promise(() => vscode.window.showInformationMessage(message));
-            yield* self.getQueryPlanDone();
+            yield* getQueryPlanDone();
             return;
           }
-          yield* Effect.promise(() => getSoqlRuntime().runPromise(executeQueryPlan(self.document.getText())));
-          yield* self.getQueryPlanDone();
+          yield* Effect.promise(() => getSoqlRuntime().runPromise(executeQueryPlan(document.getText())));
+          yield* getQueryPlanDone();
         }).pipe(
           Effect.catchAllCause(cause => {
             const err = Cause.squash(cause);
-            return Effect.gen(function* () {
-              yield* appendToChannel(
-                nls.localize('error_run_soql_query', err instanceof Error ? err.message : String(err))
-              );
-              yield* self.getQueryPlanDone();
-            });
+            return appendToChannel(
+              nls.localize('error_run_soql_query', err instanceof Error ? err.message : String(err))
+            ).pipe(Effect.andThen(this.getQueryPlanDone()));
           }),
           Effect.withSpan('SOQLEditor.get_query_plan')
         );
       }
+
+      case 'set_default_org':
+        return Effect.promise(() => vscode.commands.executeCommand('sf.set.default.org')).pipe(
+          Effect.asVoid,
+          Effect.withSpan('SOQLEditor.set_default_org')
+        );
 
       default:
         return appendToChannel(nls.localize('error_unknown_error', event.type)).pipe(
@@ -317,6 +302,7 @@ export class SOQLEditorInstance {
     await webview.createOrShowWebView();
   }
 
+  // eslint-disable-next-line class-methods-use-this
   protected updateTextDocument(document: vscode.TextDocument, soqlQuery: string): Thenable<boolean> {
     const edit = new vscode.WorkspaceEdit();
     edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), soqlQuery);
@@ -335,4 +321,5 @@ export class SOQLEditorInstance {
   }
 
   public onConnectionChanged = () => this.sendMessageToUi('connection_changed');
+  private readonly onNoDefaultOrg = () => this.sendMessageToUi('no_default_org');
 }

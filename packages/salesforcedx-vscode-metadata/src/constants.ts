@@ -7,10 +7,9 @@
 
 export const EXTENSION_NAME = 'salesforcedx-vscode-metadata';
 
-export const APEX_CLASS_NAME_MAX_LENGTH = 40;
-
 // Configuration keys
 export const CORE_CONFIG_SECTION = 'salesforcedx-vscode-core';
 export const CORE_EXTENSION_ID = 'salesforce.salesforcedx-vscode-core';
 export const DEPLOY_ON_SAVE_ENABLED = 'push-or-deploy-on-save.enabled';
 export const DEPLOY_ON_SAVE_IGNORE_CONFLICTS = 'push-or-deploy-on-save.ignoreConflictsOnPush';
+export const DETECT_CONFLICTS_FOR_DEPLOY_AND_RETRIEVE = 'detectConflictsForDeployAndRetrieve';

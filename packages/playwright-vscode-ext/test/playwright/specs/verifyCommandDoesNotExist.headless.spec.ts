@@ -6,18 +6,12 @@
  */
 
 import { verifyCommandDoesNotExist } from '../../../src/pages/commands';
-import {
-  waitForVSCodeWorkbench,
-  assertWelcomeTabExists,
-  closeWelcomeTabs,
-  ensureSecondarySideBarHidden
-} from '../../../src/utils/helpers';
+import { waitForVSCodeWorkbench, closeWelcomeTabs, ensureSecondarySideBarHidden } from '../../../src/utils/helpers';
 import { test } from '../fixtures/index';
 
 test.describe('Command Palette', () => {
   test.beforeEach(async ({ page }) => {
     await waitForVSCodeWorkbench(page);
-    await assertWelcomeTabExists(page);
     await closeWelcomeTabs(page);
     await ensureSecondarySideBarHidden(page);
   });

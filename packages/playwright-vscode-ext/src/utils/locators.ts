@@ -38,11 +38,18 @@ export const APEX_TRACE_FLAG_STATUS_BAR = '#salesforce\\.salesforcedx-vscode-ape
 /** Notification list items in the notification center */
 export const NOTIFICATION_LIST_ITEM = `${WORKBENCH} .notification-list-item`;
 
-/** Settings editor search input */
+/** Settings editor search input (data-uri is stable across VS Code versions; Monaco may not expose a light-DOM textarea) */
 export const SETTINGS_SEARCH_INPUT = [
+  `${WORKBENCH} [data-uri^="settingseditor:searchinput"]`,
   `${WORKBENCH} .settings-header .search-container ${EDITOR}`,
   `${WORKBENCH} [aria-label="Settings"] .settings-header .search-container ${EDITOR}`
 ] as const;
 
 /** VS Code context menu container */
 export const CONTEXT_MENU = '.monaco-menu';
+
+/**
+ * Code lens interactive element — desktop (Electron) renders as `<a>` inside
+ * `.codelens-decoration`; web (Chromium) renders as `<button>` directly.
+ */
+export const CODELENS_ITEM = '.codelens-decoration a, .codelens-decoration button';

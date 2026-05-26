@@ -57,6 +57,7 @@ const listApexTestSuiteItems = async (): Promise<ApexTestQuickPickItem[]> => {
 };
 
 class TestSuiteSelector implements ParametersGatherer<ApexTestQuickPickItem> {
+  // eslint-disable-next-line class-methods-use-this
   public async gather(): Promise<CancelResponse | ContinueResponse<ApexTestQuickPickItem>> {
     const quickPickItems = await listApexTestSuiteItems();
 
@@ -67,6 +68,7 @@ class TestSuiteSelector implements ParametersGatherer<ApexTestQuickPickItem> {
 }
 
 class TestSuiteBuilder implements ParametersGatherer<ApexTestSuiteOptions> {
+  // eslint-disable-next-line class-methods-use-this
   public async gather(): Promise<CancelResponse | ContinueResponse<ApexTestSuiteOptions>> {
     const quickPickItems = await listApexTestSuiteItems();
 
@@ -81,9 +83,7 @@ class TestSuiteBuilder implements ParametersGatherer<ApexTestSuiteOptions> {
       if (!apexClassSelection || apexClassSelection.length === 0) {
         return { type: 'CANCEL' };
       }
-      const apexClassNames = apexClassSelection.map(
-        selection => selection.fullClassName ?? selection.label
-      );
+      const apexClassNames = apexClassSelection.map(selection => selection.fullClassName ?? selection.label);
       return {
         type: 'CONTINUE',
         data: { suitename: testSuiteName.label, tests: apexClassNames }
@@ -94,9 +94,10 @@ class TestSuiteBuilder implements ParametersGatherer<ApexTestSuiteOptions> {
 }
 
 class TestSuiteCreator implements ParametersGatherer<ApexTestSuiteOptions> {
+  // eslint-disable-next-line class-methods-use-this
   public async gather(): Promise<CancelResponse | ContinueResponse<ApexTestSuiteOptions>> {
     const testSuiteInput: vscode.InputBoxOptions = {
-      prompt: 'Enter desired Apex test suite name:'
+      prompt: nls.localize('apex_test_suite_name_input_prompt')
     };
     const testSuiteName = await vscode.window.showInputBox(testSuiteInput);
 
@@ -130,9 +131,7 @@ class TestSuiteCreator implements ParametersGatherer<ApexTestSuiteOptions> {
       if (!apexClassSelection || apexClassSelection.length === 0) {
         return { type: 'CANCEL' };
       }
-      const apexClassNames = apexClassSelection.map(
-        selection => selection.fullClassName ?? selection.label
-      );
+      const apexClassNames = apexClassSelection.map(selection => selection.fullClassName ?? selection.label);
       return {
         type: 'CONTINUE',
         data: { suitename: testSuiteName, tests: apexClassNames }
@@ -149,6 +148,7 @@ class ApexLibraryTestSuiteBuilder extends LibraryCommandletExecutor<ApexTestSuit
     super(nls.localize(notificationMessageKey), 'apex_test_suite_build_library', OUTPUT_CHANNEL);
   }
 
+  // eslint-disable-next-line class-methods-use-this
   public async run(response: ContinueResponse<ApexTestSuiteOptions>): Promise<boolean> {
     const connection = await getConnection();
     const testService = new TestService(connection);

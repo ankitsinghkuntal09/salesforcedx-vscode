@@ -1,5 +1,6 @@
 {
   "name": "salesforcedx-vscode-soql",
+  "private": true,
   "displayName": "SOQL",
   "description": "Provides code-editing features for SOQL",
   "qna": "https://github.com/forcedotcom/salesforcedx-vscode/issues",
@@ -9,7 +10,7 @@
   "repository": {
     "url": "https://github.com/forcedotcom/salesforcedx-vscode"
   },
-  "version": "66.4.2",
+  "version": "66.13.0",
   "publisher": "salesforce",
   "o11yUploadEndpoint": "https://794testsite.my.site.com/byolwr/webruntime/log/metrics",
   "enableO11y": "true",
@@ -34,8 +35,7 @@
     "soql builder"
   ],
   "dependencies": {
-    "@salesforce/apex-tmlanguage": "^1.8.3",
-    "@salesforce/core": "^8.28.0",
+    "@salesforce/core": "^8.31.0",
     "@salesforce/effect-ext-utils": "*",
     "effect": "^3.20.0",
     "@salesforce/soql-common": "*",
@@ -48,13 +48,12 @@
     "vscode-uri": "^3.1.0"
   },
   "devDependencies": {
-    "@salesforce/core": "^8.28.0",
     "@babel/preset-typescript": "^7.0.0",
     "@lwc/engine-dom": "^9.0.0",
     "@lwc/eslint-plugin-lwc": "^3.3.0",
     "@lwc/jest-preset": "^19.0.0",
     "@lwc/rollup-plugin": "^9.0.0",
-    "@lwc/synthetic-shadow": "^9.0.0",
+    "@lwc/synthetic-shadow": "^9.1.1",
     "@rollup/plugin-alias": "^6.0.0",
     "@rollup/plugin-babel": "^6.0.0",
     "@rollup/plugin-commonjs": "^29.0.0",
@@ -67,16 +66,15 @@
     "@salesforce/ts-types": "^2.0.12",
     "@types/debounce": "^1.2.0",
     "@types/papaparse": "^5.2.3",
-    "immutable": "^5.1.5",
     "jest-environment-jsdom": "^29.0.0",
     "rollup": "^4.0.0",
-    "rxjs": "^7.8.2",
     "salesforcedx-vscode-services": "*"
   },
   "extensionDependencies": [
     "salesforce.salesforcedx-vscode-services"
   ],
   "scripts": {
+    "preinstall": "node ../../scripts/require-root-install.js",
     "vscode:bundle": "wireit",
     "compile": "wireit",
     "lint": "wireit",
@@ -94,31 +92,28 @@
     "test:e2e": "wireit",
     "vscode:package": "wireit",
     "vscode:sha256": "node ../../scripts/generate-sha256.js >> ../../SHA256",
-    "vscode:publish": "node ../../scripts/publish-vsix.js"
+    "vscode:publish": "node ../../scripts/publish-vsix.js",
+    "test:compile": "wireit"
   },
   "wireit": {
     "compile": {
-      "command": "tsc --build --pretty",
+      "command": "tsc --pretty",
       "clean": "if-file-deleted",
       "dependencies": [
+        "../effect-ext-utils:compile",
         "../soql-common:compile",
         "../salesforcedx-vscode-i18n:compile",
         "../salesforcedx-vscode-services:compile"
       ],
       "files": [
         "src/**/*.ts",
-        "test/**/*.ts",
         "tsconfig.json",
         "../../tsconfig.common.json",
         "package.json",
-        "package.nls*.json",
-        "../soql-common/out/**",
-        "../salesforcedx-vscode-i18n/out/**",
-        "../salesforcedx-vscode-services/out/**"
+        "package.nls*.json"
       ],
       "output": [
-        "out/**",
-        "tsconfig.tsbuildinfo"
+        "out/**"
       ]
     },
     "copy:grammars": {
@@ -201,12 +196,11 @@
       "files": []
     },
     "test": {
-      "command": "jest --coverage",
+      "command": "jest",
       "dependencies": [
-        "compile"
+        "test:compile"
       ],
       "files": [
-        "src/**/*.ts",
         "test/**/*.ts",
         "jest.config.js",
         "../../config/jest.base.config.js"
@@ -216,13 +210,15 @@
       ]
     },
     "lint": {
-      "command": "../../node_modules/.bin/eslint --color --cache --cache-location .eslintcache .",
+      "command": "../../node_modules/.bin/eslint --color .",
       "dependencies": [
         "../eslint-local-rules:compile",
-        "check:circular-deps"
+        "check:circular-deps",
+        "compile"
       ],
       "files": [
         "src/**/*.ts",
+        "src/**/*.html",
         "test/**/*.ts",
         "../../eslint.config.mjs",
         ".vscodeignore",
@@ -245,14 +241,13 @@
       ]
     },
     "test:web": {
-      "command": "playwright test --config=playwright.config.web.ts",
+      "command": "playwright test --config=test/playwright/playwright.config.web.ts",
       "env": {
         "PLAYWRIGHT_WORKERS": {
           "external": true
         }
       },
       "dependencies": [
-        "compile",
         "vscode:bundle",
         "../salesforcedx-vscode-services:vscode:bundle",
         "../salesforcedx-vscode-services:spans:server",
@@ -260,28 +255,29 @@
         "../playwright-vscode-ext:compile"
       ],
       "files": [
-        "playwright.config.web.ts",
         "test/playwright/**/*.ts",
         "package*.json"
       ],
       "output": []
     },
     "test:desktop": {
-      "command": "playwright test --config=playwright.config.desktop.ts",
+      "command": "playwright test --config=test/playwright/playwright.config.desktop.ts",
       "env": {
         "VSCODE_DESKTOP": "1",
+        "E2E_FROM_VSIX": {
+          "external": true
+        },
         "PLAYWRIGHT_WORKERS": {
           "external": true
         }
       },
       "dependencies": [
-        "vscode:bundle",
-        "../salesforcedx-vscode-metadata:vscode:bundle",
-        "../salesforcedx-vscode-services:vscode:bundle",
+        "vscode:package",
+        "../salesforcedx-vscode-services:vscode:package",
+        "../salesforcedx-vscode-metadata:vscode:package",
         "../playwright-vscode-ext:compile"
       ],
       "files": [
-        "playwright.config.desktop.ts",
         "test/playwright/**/*.ts",
         "package*.json"
       ],
@@ -310,6 +306,18 @@
       "output": [
         "*.vsix"
       ]
+    },
+    "test:compile": {
+      "command": "tsc -p test/tsconfig.json",
+      "dependencies": [
+        "compile",
+        "../playwright-vscode-ext:compile"
+      ],
+      "files": [
+        "test/**/*.ts",
+        "test/tsconfig.json"
+      ],
+      "output": []
     }
   },
   "main": "dist/index.js",
@@ -432,6 +440,12 @@
           "type": "boolean",
           "default": false,
           "description": "%soql_validation_flag%"
+        },
+        "salesforcedx-vscode-soql.maxQueryLimit": {
+          "type": "integer",
+          "default": 50000,
+          "minimum": 1,
+          "description": "%soql_max_query_limit%"
         }
       }
     },
@@ -446,7 +460,7 @@
             "title": "%soql_walkthrough_step1_title%",
             "description": "%soql_walkthrough_step1_description%",
             "media": {
-              "image": "images/SOQL_Builder_50.16.0.gif",
+              "image": "images/soql-builder-walkthrough.gif",
               "altText": "%soql_walkthrough_step1_alt%"
             }
           },
@@ -455,7 +469,7 @@
             "title": "%soql_walkthrough_step2_title%",
             "description": "%soql_walkthrough_step2_description%",
             "media": {
-              "image": "images/SOQL_Builder_50.16.0.gif",
+              "image": "images/soql-builder-walkthrough.gif",
               "altText": "%soql_walkthrough_step2_alt%"
             },
             "completionEvents": [
@@ -467,7 +481,7 @@
             "title": "%soql_walkthrough_step3_title%",
             "description": "%soql_walkthrough_step3_description%",
             "media": {
-              "image": "images/SOQL_Builder_50.16.0.gif",
+              "image": "images/soql-builder-walkthrough.gif",
               "altText": "%soql_walkthrough_step3_alt%"
             }
           },
@@ -476,7 +490,7 @@
             "title": "%soql_walkthrough_step4_title%",
             "description": "%soql_walkthrough_step4_description%",
             "media": {
-              "image": "images/SOQL_Builder_50.16.0.gif",
+              "image": "images/soql-builder-walkthrough.gif",
               "altText": "%soql_walkthrough_step4_alt%"
             }
           },
@@ -485,8 +499,17 @@
             "title": "%soql_walkthrough_step5_title%",
             "description": "%soql_walkthrough_step5_description%",
             "media": {
-              "image": "images/SOQL_Builder_50.16.0.gif",
+              "image": "images/soql-builder-walkthrough.gif",
               "altText": "%soql_walkthrough_step5_alt%"
+            }
+          },
+          {
+            "id": "step6",
+            "title": "%soql_walkthrough_step6_title%",
+            "description": "%soql_walkthrough_step6_description%",
+            "media": {
+              "image": "images/soql-builder-walkthrough.gif",
+              "altText": "%soql_walkthrough_step6_alt%"
             }
           }
         ]

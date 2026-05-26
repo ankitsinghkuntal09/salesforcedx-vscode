@@ -12,7 +12,6 @@ import { Duration } from 'effect';
 import * as Effect from 'effect/Effect';
 import * as Order from 'effect/Order';
 import * as Stream from 'effect/Stream';
-import * as SubscriptionRef from 'effect/SubscriptionRef';
 import * as vscode from 'vscode';
 import { ORG_OPEN_COMMAND } from '../constants';
 import { nls } from '../messages';
@@ -66,7 +65,7 @@ const getIconForOrgType = (type: OrgType): string => {
   }
 };
 /** QuickPickItem for org selection with metadata for handling */
-export interface OrgQuickPickItem extends vscode.QuickPickItem {
+interface OrgQuickPickItem extends vscode.QuickPickItem {
   orgUsername?: string;
   orgAlias?: string;
   commandId?: string;
@@ -175,7 +174,10 @@ export const buildOrgQuickPickItems = (
   const filtered = filter ? authorizations.filter(filter) : authorizations;
   return authorizationsToQuickPickItems(filtered, defaultConfig).flatMap((item, index, array) => {
     if (item.orgType && (index === 0 || item.orgType !== array[index - 1].orgType)) {
-      const separator: vscode.QuickPickItem = { kind: vscode.QuickPickItemKind.Separator, label: orgTypeToLabel(item.orgType) };
+      const separator: vscode.QuickPickItem = {
+        kind: vscode.QuickPickItemKind.Separator,
+        label: orgTypeToLabel(item.orgType)
+      };
       return [separator, item];
     }
     return [item];
@@ -194,10 +196,7 @@ export const setDefaultOrg = async (): Promise<CancelResponse | ContinueResponse
     org.aliases?.length ? org : { ...org, aliases: aliasesByUsername.get(org.username) ?? [] }
   );
 
-  const quickPickList = [
-    ...ACTION_ITEMS,
-    ...buildOrgQuickPickItems(freshAuthorizations, defaultConfig)
-  ];
+  const quickPickList = [...ACTION_ITEMS, ...buildOrgQuickPickItems(freshAuthorizations, defaultConfig)];
 
   const selection = await vscode.window.showQuickPick(quickPickList, {
     placeHolder: nls.localize('org_select_text'),
@@ -243,7 +242,7 @@ export const createOrgPicker = Effect.fn('OrgPicker.createOrgPicker')(function* 
   const targetOrgRef = yield* api.services.TargetOrgRef();
 
   yield* Effect.forkDaemon(
-    Stream.concat(Stream.fromEffect(SubscriptionRef.get(targetOrgRef)), targetOrgRef.changes).pipe(
+    targetOrgRef.changes.pipe(
       Stream.tap(orgInfo => Effect.log('Org Extension:orgChange', orgInfo)),
       Stream.tap(orgInfo =>
         Effect.sync(() => (orgInfo.username ? orgOpenStatusBarItem.show() : orgOpenStatusBarItem.hide()))
@@ -267,7 +266,10 @@ type OrgTypeFromInfo = 'Scratch' | 'Sandbox' | 'Org';
 const getOrgTypeFromInfo = (orgInfo: typeof DefaultOrgInfoSchema.Type): OrgTypeFromInfo =>
   orgInfo.isScratch ? 'Scratch' : orgInfo.isSandbox ? 'Sandbox' : 'Org';
 
-const getStatusBarContent = Effect.fn('updateTargetOrgDisplay')(function* (orgInfo: typeof DefaultOrgInfoSchema.Type) {
+const getStatusBarContent = Effect.fn('updateTargetOrgDisplay', {
+  root: true,
+  attributes: { telemetryIgnore: true }
+})(function* (orgInfo: typeof DefaultOrgInfoSchema.Type) {
   const { username, aliases, isScratch } = orgInfo;
   if (!username) {
     return {
@@ -275,7 +277,12 @@ const getStatusBarContent = Effect.fn('updateTargetOrgDisplay')(function* (orgIn
       tooltip: nls.localize('status_bar_org_picker_tooltip')
     };
   }
-  const isExpired = isScratch ? yield* Effect.promise(() => isOrgExpired(username)) : false;
+  const isExpired = isScratch
+    ? yield* Effect.tryPromise({ try: () => isOrgExpired(username), catch: e => e }).pipe(
+        Effect.tapError(e => Effect.logWarning('isOrgExpired failed, treating as not expired', e)),
+        Effect.orElseSucceed(() => false)
+      )
+    : false;
   const orgType = getOrgTypeFromInfo(orgInfo);
   const typeIcon = getIconForOrgType(orgType);
   const displayName = aliases?.[0] ?? username;

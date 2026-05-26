@@ -25,7 +25,7 @@ export type ColumnData = {
   subTables: ColumnData[];
 };
 
-export type Column = {
+type Column = {
   title: string;
   fieldHelper: string[];
 };
@@ -135,5 +135,6 @@ class SelectVisitor extends AbstractParseTreeVisitor<void> implements SoqlParser
     }
   }
 
+  // eslint-disable-next-line class-methods-use-this
   protected defaultResult(): void {}
 }

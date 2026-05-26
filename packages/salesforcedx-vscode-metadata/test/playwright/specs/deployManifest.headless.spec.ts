@@ -11,7 +11,6 @@ import {
   setupConsoleMonitoring,
   setupNetworkMonitoring,
   waitForVSCodeWorkbench,
-  assertWelcomeTabExists,
   closeWelcomeTabs,
   createMinimalOrg,
   upsertScratchOrgAuthFieldsToSettings,
@@ -27,7 +26,7 @@ import {
   captureOutputChannelDetails,
   NOTIFICATION_LIST_ITEM,
   EDITOR,
-  QUICK_INPUT_WIDGET,
+  activeQuickInputWidget,
   ensureSecondarySideBarHidden
 } from '@salesforce/playwright-vscode-ext';
 import { SourceTrackingStatusBarPage } from '../pages/sourceTrackingStatusBarPage';
@@ -53,7 +52,6 @@ const escapeRegex = (str: string): string => str.replace(/[.*+?^${}()|[\]\\]/g, 
   await test.step('setup minimal org and disable deploy-on-save', async () => {
     const createResult = await createMinimalOrg();
     await waitForVSCodeWorkbench(page);
-    await assertWelcomeTabExists(page);
     await closeWelcomeTabs(page);
     await ensureSecondarySideBarHidden(page);
     await upsertScratchOrgAuthFieldsToSettings(page, createResult);
@@ -85,9 +83,9 @@ const escapeRegex = (str: string): string => str.replace(/[.*+?^${}()|[\]\\]/g, 
     await executeCommandWithCommandPalette(page, packageNls.project_generate_manifest_text);
 
     // Wait for input prompt
-    const quickInput = page.locator(QUICK_INPUT_WIDGET);
-    await quickInput.waitFor({ state: 'visible', timeout: 10_000 });
-    await quickInput.getByText(messages.manifest_input_save_prompt).waitFor({ state: 'visible', timeout: 10_000 });
+    const quickInput = activeQuickInputWidget(page);
+    await quickInput.waitFor({ state: 'attached', timeout: 10_000 });
+    await quickInput.getByText(messages.manifest_input_save_prompt).waitFor({ state: 'attached', timeout: 10_000 });
 
     // Accept default filename (package.xml) by pressing Enter
     await page.keyboard.press('Enter');

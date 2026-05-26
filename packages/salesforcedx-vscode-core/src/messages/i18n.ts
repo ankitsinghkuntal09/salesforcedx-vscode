@@ -4,7 +4,6 @@
  * Licensed under the BSD 3-Clause license.
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
-import { MISSING_LABEL_MSG } from '@salesforce/vscode-i18n';
 /**
  * Conventions:
  * _message: is for unformatted text that will be shown as-is to
@@ -17,138 +16,37 @@ import { MISSING_LABEL_MSG } from '@salesforce/vscode-i18n';
  */
 export const messages = {
   channel_name: 'Salesforce CLI',
-  channel_starting_message: 'Starting ',
-  channel_end: 'Ended',
-  parameter_gatherer_enter_file_name: 'Enter desired filename',
-  parameter_gatherer_enter_dir_name: 'Enter desired directory (Press Enter to confirm or Esc to cancel)',
   parameter_gatherer_enter_package_id: 'Enter the ID of the package to install',
   parameter_gatherer_enter_installation_key_if_necessary:
     'Enter the installation key, if required, or leave the field blank',
-  parameter_gatherer_enter_project_name: 'Enter project name',
-  parameter_gatherer_select_lwc_type: 'Select LWC component type',
   project_retrieve_start_default_org_text: 'SFDX: Pull Source from Default Org',
   project_retrieve_start_ignore_conflicts_default_org_text: 'SFDX: Pull Source from Default Org and Ignore Conflicts',
   project_deploy_start_default_org_text: 'SFDX: Push Source to Default Org',
   project_deploy_start_ignore_conflicts_default_org_text: 'SFDX: Push Source to Default Org and Ignore Conflicts',
   view_all_changes_text: 'View All Changes (Local and in Default Org)',
   deploy_this_source_text: 'SFDX: Deploy This Source to Org',
-  deploy_select_file_or_directory: 'You can run SFDX: Deploy This Source to Org only on a source file or directory.',
-  deploy_select_manifest: 'You can run SFDX: Deploy Source in Manifest to Org only on a manifest file.',
   retrieve_this_source_text: 'SFDX: Retrieve This Source from Org',
-  retrieve_select_file_or_directory:
-    'You can run SFDX: Retrieve This Source from Org only on a source file or directory.',
-  retrieve_select_manifest: 'You can run SFDX: Retrieve Source in Manifest from Org only on a manifest file.',
   delete_source_text: 'SFDX: Delete from Project and Org',
-  delete_source_manifest_unsupported_message:
-    'SFDX: Delete from Project and Org is not supported for manifest files. Select a source file or directory to delete.',
-  delete_source_select_file_or_directory:
-    'You can run SFDX: Delete from Project and Org only on a source file or directory.',
-  delete_source_confirmation_message:
-    'Deleting source files deletes the files from your computer and removes the corresponding metadata from your default org. Are you sure you want to delete this source from your project and your org?',
-  confirm_delete_source_button_text: 'Delete Source',
-  cancel_delete_source_button_text: 'Cancel',
-  delete_source_conflicts_detected: 'Conflicts detected. Resolve conflicts before deleting.',
-  delete_source_no_components_found: 'No components found to delete',
-  delete_source_no_username_found: 'No username found for org',
-  delete_source_stash_target_not_found: 'Stash target not found for file: %s',
-  delete_source_stash_source_not_found: 'Stash source not found for file: %s',
-  delete_source_operation_failed: 'Delete operation failed',
-  table_title_deleted_source: 'Deleted Source',
-  table_title_delete_errors: 'Delete Errors',
-  analytics_generate_template_text: 'SFDX: Create Sample Analytics Template',
-  analytics_template_name_text: 'template name',
   apex_generate_class_text: 'SFDX: Create Apex Class',
   apex_generate_unit_test_class_text: 'SFDX: Create Apex Unit Test Class',
-  visualforce_generate_component_text: 'SFDX: Create Visualforce Component',
-  visualforce_generate_page_text: 'SFDX: Create Visualforce Page',
-  lightning_generate_app_text: 'SFDX: Create Aura App',
-  lightning_generate_aura_component_text: 'SFDX: Create Aura Component',
-  lightning_generate_event_text: 'SFDX: Create Aura Event',
-  lightning_generate_interface_text: 'SFDX: Create Aura Interface',
   project_generate_manifest: 'SFDX: Generate Manifest File',
   view_local_changes_text: 'SFDX: View Local Changes',
   view_remote_changes_text: 'SFDX: View Changes in Default Org',
-  warning_prompt_dir_overwrite:
-    'A folder with the specified project name already exists in the selected directory. Do you want to overwrite it?',
-  warning_prompt_overwrite_cancel: 'Cancel',
-  warning_prompt_overwrite_message: 'Are you sure you want to overwrite %s:%s?\n\n%s\n\n%s',
-  warning_prompt_overwrite: 'Overwrite',
-  warning_prompt_overwrite_all: 'Overwrite All',
-  warning_prompt_skip: 'Skip',
-  warning_prompt_skip_all: 'Skip All',
-  warning_prompt_other_existing: '%d other existing components',
-  warning_prompt_other_not_shown: '...%d other components not shown\n',
   config_list_text: 'SFDX: List All Config Variables',
+  config_list_column_name: 'Name',
+  config_list_column_value: 'Value',
+  config_list_column_location: 'Location',
+  config_list_table_title: 'List Config',
+  config_list_no_results: 'No results found',
   alias_list_text: 'SFDX: List All Aliases',
   package_install_text: 'SFDX: Install Package',
-  project_generate_text: 'SFDX: Create Project',
-  project_generate_open_dialog_create_label: 'Create Project',
-  project_generate_standard_template_display_text: 'Standard',
-  project_generate_empty_template_display_text: 'Empty',
-  project_generate_analytics_template_display_text: 'Analytics',
-  project_generate_react_b2e_template_display_text: 'React Internal App',
-  project_generate_react_b2x_template_display_text: 'React External App',
-  project_generate_agent_template_display_text: 'Agent',
-  project_generate_empty_template: 'Empty project template',
-  project_generate_standard_template: 'Standard project template',
-  project_generate_analytics_template: 'Analytics project template',
-  project_generate_react_b2e_template:
-    'For employees signing in with Salesforce credentials (B2E). Sample app: Property Management App.',
-  project_generate_react_b2x_template:
-    'For customers or partners signing in outside your org (B2C). Sample app: Property Rental App.',
-  project_generate_agent_template: 'Agent project template',
-  select_lwc_language_prompt: 'Select default Lightning Web Component language',
-  javascript_language_option: 'JavaScript',
-  javascript_language_description: 'Create LWC components using JavaScript',
-  typescript_language_option: 'TypeScript',
-  typescript_language_description: 'Create LWC components using TypeScript',
-  typescript_legacy_flag_deprecation:
-    "The 'preview.typeScriptSupport' setting is deprecated. Please set 'defaultLwcLanguage': 'typescript' in your sfdx-project.json instead.",
-
-  manifest_input_dupe_error: 'Manifest with the name %s already exists. Delete this manifest or use another name.',
-  manifest_input_save_placeholder: 'Enter a unique manifest file name (without file extension)',
-  manifest_input_save_prompt: 'Press Enter to confirm your input or Escape to cancel and view unsaved manifest file',
-  manifest_generation_cancelled: 'SFDX: Generate Manifest File was cancelled.',
   telemetry_legal_dialog_message:
     'You agree that Salesforce Extensions for VS Code may collect usage information, user environment, and crash reports for product improvements. Learn how to [opt out](%s).',
   telemetry_legal_dialog_button_text: 'Read more',
   telemetry_internal_user_message:
     "We're collecting information on the usage of our extensions and sending it to AppInsights to help us understand how our internal developers use them. We want to gather data on developer adoption to improve our products and services. Thanks for being a part of this process!",
-  error_fetching_auth_info_text:
-    'Error running push or deploy on save: We couldn\'t connect to your default org. Run "SFDX: Create a Default Scratch Org" or "SFDX: Authorize an Org", then push or deploy the source that you just saved. Or, to disable push or deploy on save, set "salesforcedx-vscode-core.push-or-deploy-on-save.enabled" to false in your user or workspace settings for VS Code.',
-  error_no_package_directories_found_on_setup_text:
-    'Error setting up push or deploy on save: Your sfdx-project.json file doesn\'t contain a "packageDirectories" property. Add this property, or, to disable push or deploy on save, set "salesforcedx-vscode-core.push-or-deploy-on-save.enabled" to false in your user or workspace settings for VS Code. For details about sfdx-project.json, see: https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm',
-  error_no_package_directories_paths_found_text:
-    'Error setting up push or deploy on save: The "packageDirectories" property in your sfdx-project.json file doesn\'t contain a "path" value. Add a value for the "path" property, or, to disable push or deploy on save, set "salesforcedx-vscode-core.push-or-deploy-on-save.enabled" to false in your user or workspace settings for VS Code. For details about sfdx-project.json, see: https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm',
-  error_push_or_deploy_on_save_no_target_org:
-    'Error running push or deploy on save: No default org is set. Run "SFDX: Create a Default Scratch Org" or "SFDX: Authorize an Org", then push or deploy the changes that you just saved. Or, to disable push or deploy on save, set "salesforcedx-vscode-core.push-or-deploy-on-save.enabled" to false in your user or workspace settings for VS Code.',
-  error_source_path_not_in_package_directory_text:
-    'Error deploying or retrieving source: The file or directory that you tried to deploy or retrieve isn\'t in a package directory that\'s specified in your sfdx-project.json file. Add this location to your "packageDirectories" value, or deploy or retrieve a different file or directory. For details about sfdx-project.json, see: https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm',
-  missing_default_org: 'No Default Org Set',
   error_parsing_sfdx_project_file: "Couldn't parse sfdx-project.json file (%s). Parse error: %s",
-  table_header_errors: 'ERRORS',
-  table_header_project_path: 'PROJECT PATH',
-  table_header_type: 'TYPE',
-  table_header_full_name: 'FULL NAME',
-  table_header_state: 'STATE',
-  table_header_message: 'MESSAGE',
-  table_no_results_found: 'No results found',
-  table_title_deployed_source: 'Deployed Source',
-  table_title_deploy_errors: 'Deploy Errors',
-  table_title_pulled_source: 'Pulled Source',
-  table_title_pull_errors: 'Pull Errors',
-  table_title_pushed_source: 'Pushed Source',
-  table_title_push_errors: 'Push Errors',
-  push_conflicts_error:
-    'We couldn’t push your source due to conflicts. Make sure that you want to overwrite the metadata in your org with your local files, then run "SFDX: Push Source to Default Scratch Org and Ignore Conflicts".',
-  pull_conflicts_error:
-    'We couldn’t pull your source due to conflicts. Make sure that you want to overwrite the metadata in your local project, then run "SFDX: Pull Source to Default Scratch Org and Ignore Conflicts".',
-  custom_output_directory: 'Choose a Custom Directory',
   lightning_generate_lwc_text: 'SFDX: Create Lightning Web Component',
-  error_overwrite_prompt: 'Error checking workspace for existing components',
-  error_source_tracking_connection_failed: 'Failed to establish connection to the org for source tracking.',
-  error_source_tracking_service_failed: 'Failed to initialize source tracking service.',
-  error_source_tracking_components_failed: 'Failed to retrieve components using source tracking: %s',
 
   AccessControlPolicy: 'Access Control Policies',
   ActionLinkGroupTemplate: 'Action Link Group Templates',
@@ -471,48 +369,12 @@ export const messages = {
   WaveDataset: 'Wave Datasets',
   WaveLens: 'Wave Lenses',
   WaveRecipe: 'Wave Recipes',
-  WaveTemplateBundle: 'Wave Template Bundles',
   WaveXmd: 'Wave Xmds',
   WebLink: 'Web Links',
   Workflow: 'Workflows',
   WorkflowFlowAutomation: 'Workflow Flow Automations',
   XOrgHub: 'X Org Hubs',
 
-  conflict_detect_execution_name: 'Conflict Detection',
-  conflict_detect_error: 'An error was encountered during conflict detection. %s',
-  conflict_detect_initialization_error: 'Unexpected error initializing metadata cache',
-  conflict_detect_conflicts_during_deploy: 'Conflicts were detected while deploying metadata. Choose how to proceed.',
-  conflict_detect_conflicts_during_retrieve:
-    'Conflicts are detected while retrieving metadata. Select Override Conflicts to proceed or Cancel to view the conflicts.',
-  conflict_detect_override_deploy: 'Override Conflicts and Deploy',
-  conflict_detect_override_retrieve: 'Override Conflicts and Retrieve',
-  conflict_detect_show_conflicts_deploy: 'View Conflicts and Cancel Deploy',
-  conflict_detect_show_conflicts_retrieve: 'View Conflicts and Cancel Retrieve',
-  conflict_detect_conflict_header_timestamp: 'Conflicts:\n    Found %d file(s) in conflict:\n',
-  conflict_detect_command_hint_push:
-    '\nRun the following command to overwrite the conflicts:\n SFDX: Push Source to Default Org and Ignore Conflicts\n',
-  conflict_detect_command_hint_pull:
-    '\nRun the following command to overwrite the conflicts:\n SFDX: Pull Source from Default Org and Ignore Conflicts\n',
-  conflict_detect_no_target_org: 'No target org for this project',
-  conflict_detect_view_init: 'Conflict detection view has not been initialized',
-  conflict_detect_not_enabled: 'Enable the Detect Conflicts for Deploy and Retrieve setting to view org differences',
-  conflict_detect_view_root: '%s : %d file difference(s)',
-  conflict_detect_no_conflicts: 'No conflicts',
-  conflict_detect_no_differences: 'No differences',
-  conflict_detect_diff_title: '%s//%s ↔ local//%s',
-  conflict_detect_diff_command_title: 'Compare Files',
-  conflict_detect_remote_last_modified_date: 'Org last modified date: %s \n',
-  conflict_detect_local_last_modified_date: 'Local last sync date: %s',
-
-  source_diff_text: 'SFDX: Diff File Against Org',
-  source_diff_folder_text: 'SFDX: Diff Folder Against Org',
-  source_diff_components_not_in_org: 'Selected components are not available in the org',
-  source_diff_unsupported_type: 'Diff for this metadata type is currently not supported',
-  source_diff_title: '%s//%s ↔ local//%s',
-  source_diff_folder_title: '%s - File Diffs',
-  lib_retrieve_no_results: 'No components retrieved',
-  lib_retrieve_result_title: 'Retrieved Source',
-  lib_retrieve_message_title: 'Retrieve Warnings',
   package_id_validation_error: 'Package ID should be a 15 or 18 character Id that starts with 04t',
   package_id_gatherer_placeholder: '04t...',
   rename_lightning_component: 'SFDX: Rename Component',
@@ -531,14 +393,10 @@ export const messages = {
   lwc_doc_url: 'https://developer.salesforce.com/tools/vscode/en/lwc/writing',
   functions_doc_url: 'https://developer.salesforce.com/tools/vscode/en/functions/overview',
   default_doc_url: 'https://developer.salesforce.com/tools/vscode',
-  parameter_gatherer_file_name_max_length_validation_error_message: 'File name cannot exceed {0} characters',
-  source_status: 'Source Status',
+
   rename_not_supported: 'Rename is not supported for multiple components',
   input_no_component_name: 'Input does not contain component name',
   component_empty: 'Component cannot be empty',
-  create_not_supported: 'Create is not supported for multiple components',
-  input_incorrect_properties: 'Input does not contain correct component properties',
-  missing_label: `${MISSING_LABEL_MSG}: %s`,
 
   // Metadata XML Support Messages
   metadata_xml_no_redhat_extension_found:
@@ -554,5 +412,3 @@ export const messages = {
 } as const;
 
 export type MessageKey = keyof typeof messages;
-
-export const isValidMessageKey = (key: string): key is MessageKey => key in messages;

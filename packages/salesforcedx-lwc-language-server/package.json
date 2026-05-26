@@ -12,9 +12,9 @@
   "sideEffects": false,
   "exports": {
     ".": {
+      "types": "./out/src/server.d.ts",
       "import": "./out/src/server.js",
-      "require": "./out/src/server.js",
-      "types": "./out/src/server.d.ts"
+      "require": "./out/src/server.js"
     }
   },
   "license": "BSD-3-Clause",
@@ -45,28 +45,30 @@
         "../../tsconfig.common.json"
       ],
       "output": [
-        "out/**",
-        "tsconfig.tsbuildinfo"
+        "out/**"
       ]
     },
     "lint": {
       "command": "eslint --color --cache --cache-location .eslintcache .",
       "dependencies": [
-        "../eslint-local-rules:compile"
+        "../eslint-local-rules:compile",
+        "compile"
       ],
       "files": [
         "src/**/*.ts",
+        "test/**/*.ts",
         "../../eslint.config.mjs"
       ],
       "output": []
     },
     "test": {
-      "command": "jest --coverage",
+      "command": "jest",
       "dependencies": [
         "compile"
       ],
       "files": [
         "src/**/*.ts",
+        "test/**/*.ts",
         "jest.config.js",
         "../../config/jest.config.js"
       ],
@@ -76,10 +78,10 @@
     }
   },
   "dependencies": {
-    "@lwc/compiler": "8.16.0",
-    "@lwc/errors": "8.16.0",
-    "@lwc/metadata": "12.2.0",
-    "@lwc/template-compiler": "8.28.2",
+    "@lwc/compiler": "9.0.3",
+    "@lwc/errors": "9.0.3",
+    "@lwc/metadata": "12.3.4",
+    "@lwc/template-compiler": "9.0.3",
     "@salesforce/apex": "^0.0.21",
     "@salesforce/label": "^0.0.21",
     "@salesforce/salesforcedx-lightning-lsp-common": "*",
@@ -93,7 +95,7 @@
     "vscode-html-languageservice": "^5.5.1",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12",
-    "vscode-uri": "^2.1.2",
+    "vscode-uri": "^3.1.0",
     "xml2js": "^0.6.2"
   },
   "devDependencies": {

@@ -1,5 +1,6 @@
 {
   "name": "salesforcedx-vscode-apex-testing",
+  "private": true,
   "displayName": "Apex Testing",
   "description": "Provides Apex test execution and management features",
   "qna": "https://github.com/forcedotcom/salesforcedx-vscode/issues",
@@ -14,7 +15,7 @@
     "color": "#ECECEC",
     "theme": "light"
   },
-  "version": "66.4.2",
+  "version": "66.13.0",
   "publisher": "salesforce",
   "o11yUploadEndpoint": "https://794testsite.my.site.com/byolwr/webruntime/log/metrics",
   "enableO11y": "true",
@@ -27,7 +28,7 @@
     "Other"
   ],
   "dependencies": {
-    "@salesforce/apex-node": "^8.4.18",
+    "@salesforce/apex-node": "^8.4.21",
     "@salesforce/effect-ext-utils": "*",
     "@salesforce/types": "^1.7.1",
     "@salesforce/vscode-i18n": "*",
@@ -35,12 +36,14 @@
     "vscode-uri": "^3.1.0"
   },
   "devDependencies": {
-    "@salesforce/playwright-vscode-ext": "*"
+    "@salesforce/playwright-vscode-ext": "*",
+    "salesforcedx-vscode-services": "*"
   },
   "extensionDependencies": [
     "salesforce.salesforcedx-vscode-services"
   ],
   "scripts": {
+    "preinstall": "node ../../scripts/require-root-install.js",
     "vscode:bundle": "wireit",
     "run:web": "wireit",
     "test:web": "wireit",
@@ -57,30 +60,29 @@
     "check:circular-deps": "wireit",
     "lint:fix": "npm run lint -- --fix",
     "clean": "shx rm -rf node_modules out dist coverage .nyc_output .wireit .eslintcache *.vsix .circular-deps.json",
-    "test": "wireit"
+    "test": "wireit",
+    "test:compile": "wireit"
   },
   "wireit": {
     "compile": {
-      "command": "tsc --build --pretty",
+      "command": "tsc --pretty",
       "clean": "if-file-deleted",
       "dependencies": [
         "../salesforcedx-utils:compile",
         "../salesforcedx-utils-vscode:compile",
         "../salesforcedx-vscode-i18n:compile",
         "../effect-ext-utils:compile",
-        "../playwright-vscode-ext:compile"
+        "../salesforcedx-vscode-services:compile"
       ],
       "files": [
         "src/**/*.ts",
-        "test/**/*.ts",
         "tsconfig.json",
         "../../tsconfig.common.json",
         "package.json",
         "package.nls*.json"
       ],
       "output": [
-        "out/**",
-        "tsconfig.tsbuildinfo"
+        "out/**"
       ]
     },
     "vscode:bundle": {
@@ -116,12 +118,11 @@
       ]
     },
     "test": {
-      "command": "jest --coverage",
+      "command": "jest",
       "dependencies": [
-        "compile"
+        "test:compile"
       ],
       "files": [
-        "src/**/*.ts",
         "test/**/*.ts",
         "jest.config.js",
         "../../config/jest.base.config.js"
@@ -134,7 +135,8 @@
       "command": "eslint --color --cache --cache-location .eslintcache .",
       "dependencies": [
         "../eslint-local-rules:compile",
-        "check:circular-deps"
+        "check:circular-deps",
+        "compile"
       ],
       "files": [
         "src/**/*.ts",
@@ -189,14 +191,13 @@
       ]
     },
     "test:web": {
-      "command": "playwright test --config=playwright.config.web.ts",
+      "command": "playwright test --config=test/playwright/playwright.config.web.ts",
       "env": {
         "PLAYWRIGHT_WORKERS": {
           "external": true
         }
       },
       "dependencies": [
-        "compile",
         "vscode:bundle",
         "../salesforcedx-vscode-services:vscode:bundle",
         "../salesforcedx-vscode-services:spans:server",
@@ -205,29 +206,30 @@
         "../playwright-vscode-ext:compile"
       ],
       "files": [
-        "playwright.config.web.ts",
         "test/playwright/**/*.ts",
         "package*.json"
       ],
       "output": []
     },
     "test:desktop": {
-      "command": "playwright test --config=playwright.config.desktop.ts",
+      "command": "playwright test --config=test/playwright/playwright.config.desktop.ts",
       "env": {
         "VSCODE_DESKTOP": "1",
+        "E2E_FROM_VSIX": {
+          "external": true
+        },
         "PLAYWRIGHT_WORKERS": {
           "external": true
         }
       },
       "dependencies": [
-        "vscode:bundle",
-        "../salesforcedx-vscode-services:vscode:bundle",
-        "../salesforcedx-vscode-metadata:vscode:bundle",
-        "../salesforcedx-vscode-apex-log:vscode:bundle",
+        "vscode:package",
+        "../salesforcedx-vscode-services:vscode:package",
+        "../salesforcedx-vscode-metadata:vscode:package",
+        "../salesforcedx-vscode-apex-log:vscode:package",
         "../playwright-vscode-ext:compile"
       ],
       "files": [
-        "playwright.config.desktop.ts",
         "test/playwright/**/*.ts",
         "package*.json"
       ],
@@ -238,11 +240,24 @@
         "test:web",
         "test:desktop"
       ]
+    },
+    "test:compile": {
+      "command": "tsc -p test/tsconfig.json",
+      "dependencies": [
+        "compile",
+        "../playwright-vscode-ext:compile"
+      ],
+      "files": [
+        "test/**/*.ts",
+        "test/tsconfig.json"
+      ],
+      "output": []
     }
   },
   "activationEvents": [
     "workspaceContains:sfdx-project.json",
-    "onFileSystem:memfs"
+    "onFileSystem:memfs",
+    "onFileSystem:apex-testing"
   ],
   "main": "./dist/index.js",
   "browser": "./dist/web/index.js",
@@ -257,6 +272,7 @@
     "menus": {
       "view/title": [],
       "view/item/context": [],
+      "testing/test/context": [],
       "explorer/context": [],
       "commandPalette": [
         {
@@ -296,8 +312,16 @@
           "when": "false"
         },
         {
+          "command": "sf.apex.test.orgOnlyClass.retrieve",
+          "when": "resourceScheme == apex-testing && editorLangId == apex"
+        },
+        {
           "command": "sf.apex.test.refresh",
           "when": "false"
+        },
+        {
+          "command": "sf.apex.test.results.clear",
+          "when": "sf:project_opened && sf:has_target_org"
         },
         {
           "command": "sf.apex.testing.walkthrough.open",
@@ -339,6 +363,10 @@
         "title": "%apex_test_last_method_run_text%"
       },
       {
+        "command": "sf.apex.test.orgOnlyClass.retrieve",
+        "title": "%apex_test_retrieve_org_only_class_text%"
+      },
+      {
         "command": "sf.apex.test.openOrgOnlyTest",
         "title": "%apex_test_open_org_class_command_title%"
       },
@@ -347,9 +375,18 @@
         "title": "%apex_test_refresh_title%"
       },
       {
+        "command": "sf.apex.test.results.clear",
+        "title": "%apex_test_clear_results_text%"
+      },
+      {
         "command": "sf.apex.testing.walkthrough.open",
-        "title": "%apex_testing_walkthrough_open_command%",
-        "category": "%apex_testing_walkthrough_category%"
+        "title": "%apex_testing_walkthrough_open_command%"
+      }
+    ],
+    "viewsWelcome": [
+      {
+        "view": "workbench.view.testing",
+        "contents": "%apex_testing_view_welcome_web%"
       }
     ],
     "walkthroughs": [
@@ -406,6 +443,33 @@
               "image": "images/walkthrough/view-test-results.png",
               "altText": "%apex_testing_walkthrough_step5_alt%"
             }
+          },
+          {
+            "id": "stale-results",
+            "title": "%apex_testing_walkthrough_step6_title%",
+            "description": "%apex_testing_walkthrough_step6_description%",
+            "media": {
+              "markdown": "images/walkthrough/stale-results.md"
+            }
+          },
+          {
+            "id": "deploy-freshness",
+            "title": "%apex_testing_walkthrough_step7_title%",
+            "description": "%apex_testing_walkthrough_step7_description%",
+            "media": {
+              "markdown": "images/walkthrough/deploy-freshness.md"
+            }
+          },
+          {
+            "id": "clear-results",
+            "title": "%apex_testing_walkthrough_step8_title%",
+            "description": "%apex_testing_walkthrough_step8_description%",
+            "media": {
+              "markdown": "images/walkthrough/clear-results.md"
+            },
+            "completionEvents": [
+              "onCommand:sf.apex.test.results.clear"
+            ]
           }
         ]
       }
@@ -469,6 +533,11 @@
           "type": "boolean",
           "default": false,
           "description": "%apex_disable_warnings_for_missing_coverage%"
+        },
+        "salesforcedx-vscode-apex-testing.restore-previous-results": {
+          "type": "boolean",
+          "default": true,
+          "description": "%apex_restore_previous_results_description%"
         }
       }
     }

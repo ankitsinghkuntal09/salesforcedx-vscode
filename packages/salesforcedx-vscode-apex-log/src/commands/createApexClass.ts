@@ -53,7 +53,9 @@ const promptForTemplate = Effect.fn('promptForTemplate')(function* () {
 });
 
 /** arg: explorer context URI OR explicit command params. */
-export const createApexClassCommand = Effect.fn('createApexClassCommand')(function* (arg?: URI | CreateApexClassParams) {
+export const createApexClassCommand = Effect.fn('createApexClassCommand')(function* (
+  arg?: URI | CreateApexClassParams
+) {
   const api = yield* (yield* ExtensionProviderService).getServicesApi;
   const promptService = yield* api.services.PromptService;
   const project = yield* api.services.ProjectService.getSfProject();
@@ -63,8 +65,7 @@ export const createApexClassCommand = Effect.fn('createApexClassCommand')(functi
   const template = params?.template ?? (yield* promptForTemplate());
   const className = params?.name ?? (yield* promptForApexTypeName({ prompt: nls.localize('apex_class_name_prompt') }));
 
-  const defaultPkg = project.getPackageDirectories().find(p => p.default) ?? project.getPackageDirectories()[0];
-  const defaultUri = Utils.joinPath(workspaceInfo.uri, defaultPkg.path, 'main', 'default', 'classes');
+  const defaultUri = Utils.joinPath(workspaceInfo.uri, project.getDefaultPackage().path, 'main', 'default', 'classes');
 
   const outputDirFromContext = URI.isUri(arg) ? arg : undefined;
   const outputDirUri =
@@ -72,6 +73,7 @@ export const createApexClassCommand = Effect.fn('createApexClassCommand')(functi
     outputDirFromContext ??
     (yield* promptService.promptForOutputDir({
       defaultUri,
+      folderName: 'classes',
       pickerPlaceHolder: nls.localize('output_dir_prompt')
     }));
 

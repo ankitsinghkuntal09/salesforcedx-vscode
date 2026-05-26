@@ -11,13 +11,11 @@ import {
   ContinueResponse,
   notificationService,
   ProgressNotification,
-  TimingUtils,
   workspaceUtils
 } from '@salesforce/salesforcedx-utils-vscode';
 import { Properties, Measurements } from '@salesforce/vscode-service-provider';
 import * as vscode from 'vscode';
 import { channelService } from '../../channels';
-import { PROJECT_RETRIEVE_START_LOG_NAME, PROJECT_DEPLOY_START_LOG_NAME } from '../../constants';
 import { telemetryService } from '../../telemetry';
 import { CommandletExecutor } from './commandletExecutor';
 
@@ -33,12 +31,7 @@ export abstract class SfCommandletExecutor<T> implements CommandletExecutor<T> {
     cancellationTokenSource: vscode.CancellationTokenSource,
     cancellationToken: vscode.CancellationToken
   ) {
-    const commandLogName = execution.command.logName;
-    // If Push or Pull operation, output text will be
-    // generated later using a parser.
-    if (!(commandLogName === PROJECT_RETRIEVE_START_LOG_NAME || commandLogName === PROJECT_DEPLOY_START_LOG_NAME)) {
-      channelService.streamCommandOutput(execution);
-    }
+    channelService.streamCommandOutput(execution);
 
     if (this.showChannelOutput) {
       channelService.showChannelOutput();
@@ -58,7 +51,7 @@ export abstract class SfCommandletExecutor<T> implements CommandletExecutor<T> {
   }
 
   public execute(response: ContinueResponse<T>): void | Promise<void> {
-    const startTime = TimingUtils.getCurrentTime();
+    const startTime = globalThis.performance.now();
     const cancellationTokenSource = new vscode.CancellationTokenSource();
     const cancellationToken = cancellationTokenSource.token;
     const execution = new CliCommandExecutor(this.build(response.data), {

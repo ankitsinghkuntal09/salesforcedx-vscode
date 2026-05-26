@@ -7,19 +7,21 @@
  */
 
 import { LightningElement, api } from 'lwc';
+import { messages } from 'querybuilder/messages';
 
 export default class Limit extends LightningElement {
   @api public hasError = false;
   @api public limit;
 
+  public get i18n() {
+    return messages;
+  }
+
   /* eslint-disable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access */
   public handleLimitChange(e: Event): void {
     e.preventDefault();
     const limit = e.target.value;
-    const sObjectSelected = new CustomEvent('limit__changed', {
-      detail: { limit }
-    });
-    this.dispatchEvent(sObjectSelected);
+    this.dispatchEvent(new CustomEvent('limit__changed', { detail: { limit } }));
   }
   /* eslint-enable @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access */
 }

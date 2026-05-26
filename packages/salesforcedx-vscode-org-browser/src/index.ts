@@ -16,8 +16,12 @@ import * as SubscriptionRef from 'effect/SubscriptionRef';
 import * as vscode from 'vscode';
 import { retrieveEffect } from './commands/retrieveMetadata';
 import { EXTENSION_NAME, TREE_VIEW_ID } from './constants';
-import { nls } from './messages';
-import { AllServicesLayer, buildAllServicesLayer, getOrgBrowserRuntime, setAllServicesLayer } from './services/extensionProvider';
+import {
+  AllServicesLayer,
+  buildAllServicesLayer,
+  getOrgBrowserRuntime,
+  setAllServicesLayer
+} from './services/extensionProvider';
 import { MetadataTypeTreeProvider } from './tree/metadataTypeTreeProvider';
 import { OrgBrowserTreeItem } from './tree/orgBrowserNode';
 
@@ -70,30 +74,17 @@ export const activateEffect = Effect.fn(`activation:${EXTENSION_NAME}`)(function
         Effect.promise(() => vscode.commands.executeCommand(`workbench.actions.treeView.${TREE_VIEW_ID}.collapseAll`))
       ),
       registerCommand(`${TREE_VIEW_ID}.retrieveMetadata`, (node: OrgBrowserTreeItem) =>
-        retrieveEffect(node, treeProvider).pipe(
-          Effect.tap(result =>
-            typeof result === 'string'
-              ? Effect.sync(() => {
-                  void vscode.window.showInformationMessage(nls.localize('retrieve_canceled'));
-                })
-              : Effect.void
-          )
-        )
+        retrieveEffect(node, treeProvider)
       )
     ],
     { concurrency: 'unbounded' }
   );
 
   yield* Effect.forkDaemon(
-    Stream.merge(
-      // get the initial state
-      Stream.fromEffect(SubscriptionRef.get(targetOrgRef)),
-      // get the ongoing changes
-      targetOrgRef.changes
-    ).pipe(
-      Stream.filter(isNotUndefined),
+    targetOrgRef.changes.pipe(
       Stream.map(org => org.orgId),
       Stream.changes,
+      // we do want a change to "no org" to trigger the refresh so it shows the empty state.
       Stream.tap(orgId => svc.appendToChannel(`Target org changed to ${orgId ?? '<NOT SET>'}`)),
       Stream.tap(() => svc.appendToChannel('Org changed, will try to update OrgBrowser')),
       Stream.runForEach(() => Effect.promise(() => treeProvider.refreshType()))

@@ -2,8 +2,23 @@ name: Apex Replay Debugger E2E (Playwright)
 
 on:
   workflow_dispatch:
+    inputs:
+      vscode_version:
+        description: 'VS Code version for E2E (e.g. 1.116.0). Empty uses repo variable
+          PLAYWRIGHT_VSCODE_VERSION.'
+        required: false
+        type: string
+        default: ''
+  workflow_call:
+    inputs:
+      vscode_version:
+        description: 'VS Code version for E2E (e.g. 1.116.0). Empty uses repo variable
+          PLAYWRIGHT_VSCODE_VERSION.'
+        required: false
+        type: string
+        default: ''
   push:
-    branches-ignore: [main, develop]
+    branches-ignore: [ main, develop ]
     paths-ignore:
       - '.claude/**'
       - '.cursor/**'
@@ -26,19 +41,26 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [ macos-latest, windows-latest ]
       fail-fast: false
 
     env:
       MINIMAL_ORG_ALIAS: minimalTestOrg
       SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL_E2E }}
       VSCODE_DESKTOP: 1
-      PLAYWRIGHT_DESKTOP_VSCODE_VERSION: ${{ vars.PLAYWRIGHT_DESKTOP_VSCODE_VERSION }}
+      E2E_FROM_VSIX: 1
+      PLAYWRIGHT_VSCODE_VERSION: ${{ github.event_name != 'push' &&
+        inputs.vscode_version != '' && inputs.vscode_version ||
+        vars.PLAYWRIGHT_VSCODE_VERSION }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
+      - name: Log desktop VS Code version
+        shell: bash
+        run: echo "::notice::VS Code version=${PLAYWRIGHT_VSCODE_VERSION}"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -65,16 +87,28 @@ jobs:
 
       - name: Install Salesforce CLI
         if: steps.try-run.outcome == 'failure'
-        run: npm i -g @salesforce/cli
+        uses: salesforcecli/github-workflows/.github/actions/retry@main
+        with:
+          max_attempts: 3
+          command: npm i -g @salesforce/cli
+          retry_wait_seconds: 30
 
       - name: Auth to dev hub (global)
         if: steps.try-run.outcome == 'failure'
-        run: echo "$SFDX_AUTH_URL" | sf org login sfdx-url --set-default-dev-hub --alias hub --sfdx-url-stdin
-        shell: bash
+        uses: salesforcecli/github-workflows/.github/actions/retry@main
+        with:
+          max_attempts: 3
+          command: bash -c 'echo "$SFDX_AUTH_URL" | sf org login sfdx-url
+            --set-default-dev-hub --alias hub --sfdx-url-stdin'
+          retry_wait_seconds: 30
 
       - name: Install Playwright browsers and OS deps
         if: steps.try-run.outcome == 'failure'
-        run: npx playwright install chromium --with-deps
+        uses: salesforcecli/github-workflows/.github/actions/retry@main
+        with:
+          max_attempts: 3
+          command: npx playwright install chromium --with-deps
+          retry_wait_seconds: 60
 
       - name: Generate minimal project
         if: steps.try-run.outcome == 'failure'
@@ -100,7 +134,8 @@ jobs:
           npm run test:desktop -w salesforcedx-vscode-apex-replay-debugger -- --reporter=html
 
       - name: Retry failed tests (sequential)
-        if: steps.try-run.outcome == 'failure' && steps.parallel-run.outcome == 'failure'
+        if: steps.try-run.outcome == 'failure' && steps.parallel-run.outcome ==
+          'failure'
         env:
           CI: 1
           VSCODE_DESKTOP: 1

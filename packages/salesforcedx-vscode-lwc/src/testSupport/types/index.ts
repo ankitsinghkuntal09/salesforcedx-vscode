@@ -4,49 +4,28 @@
  * Licensed under the BSD 3-Clause license.
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
-import { Location, Uri } from 'vscode';
-
-/**
- * Test type is 'lwc' for all LWC Jest tests.
- * The enum is created for future extensibility.
- */
-export const enum TestType {
-  LWC = 'lwc'
-}
+import { Location } from 'vscode';
+import { URI } from 'vscode-uri';
 
 /**
  * Test result statuses are presented with
  * different colors in the test explorer.
  */
-export const enum TestResultStatus {
-  PASSED,
-  FAILED,
-  SKIPPED,
-  UNKNOWN
-}
+export type TestResultStatus = 'passed' | 'failed' | 'skipped' | 'unknown';
 
 /**
  * Test Result type contains the test result status.
  * For now, failure messages are stored in DiagnosticCollection instead of here.
  */
-export type TestResult = {
+type TestResult = {
   status: TestResultStatus;
 };
-
-/**
- * The discriminant enum for the TestExecutionInfo discriminated union.
- */
-export const enum TestInfoKind {
-  TEST_CASE = 'testCase',
-  TEST_FILE = 'testFile',
-  TEST_DIRECTORY = 'testDirectory'
-}
 
 /**
  * Confirms if the TestExecutionInfo kind is TestCaseInfo
  */
 export const isTestCaseInfo = (testExecutionInfo: TestExecutionInfo): testExecutionInfo is TestCaseInfo =>
-  testExecutionInfo.kind === TestInfoKind.TEST_CASE;
+  testExecutionInfo.kind === 'testCase';
 
 /**
  * Raw Test Results generated from Jest output.
@@ -65,9 +44,8 @@ export type RawTestResult = {
  * test results and associated test cases information.
  */
 export type TestFileInfo = {
-  kind: TestInfoKind.TEST_FILE;
-  testType: TestType;
-  testUri: Uri;
+  kind: 'testFile';
+  testUri: URI;
   testLocation?: Location;
   testResult?: TestResult;
   testCasesInfo?: TestCaseInfo[];
@@ -80,9 +58,8 @@ export type TestFileInfo = {
  * test name and ancestor titles, which are used for matching with test results.
  */
 export type TestCaseInfo = {
-  kind: TestInfoKind.TEST_CASE;
-  testType: TestType;
-  testUri: Uri;
+  kind: 'testCase';
+  testUri: URI;
   testLocation?: Location;
   testResult?: TestResult;
   testName: string;
@@ -94,9 +71,8 @@ export type TestCaseInfo = {
  * It contains the test directory Uri.
  */
 export type TestDirectoryInfo = {
-  kind: TestInfoKind.TEST_DIRECTORY;
-  testType: TestType;
-  testUri: Uri;
+  kind: 'testDirectory';
+  testUri: URI;
   testResult?: TestResult;
 };
 
@@ -133,7 +109,7 @@ type LwcJestTestResultStatus = 'passed' | 'failed' | 'pending' | 'skipped' | 'to
 /**
  * Jest Test File Result
  */
-type LwcJestTestFileResult = {
+export type LwcJestTestFileResult = {
   status: 'passed' | 'failed';
   startTime: number;
   endTime: number;
@@ -144,7 +120,7 @@ type LwcJestTestFileResult = {
 /**
  * Jest Test Assertion Result
  */
-type LwcJestTestAssertionResult = {
+export type LwcJestTestAssertionResult = {
   status: LwcJestTestResultStatus;
   title: string;
   ancestorTitles: string[];
@@ -154,4 +130,5 @@ type LwcJestTestAssertionResult = {
     column: number;
     line: number;
   };
+  duration?: number;
 };

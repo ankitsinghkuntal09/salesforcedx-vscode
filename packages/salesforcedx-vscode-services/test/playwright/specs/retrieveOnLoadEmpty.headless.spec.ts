@@ -10,14 +10,13 @@ import { expect } from '@playwright/test';
 import {
   setupConsoleMonitoring,
   upsertScratchOrgAuthFieldsToSettings,
-  assertWelcomeTabExists,
   closeWelcomeTabs,
   ensureOutputPanelOpen,
   selectOutputChannel,
   waitForOutputChannelText,
   outputChannelContains,
   createMinimalOrg,
-  filterErrors,
+  validateNoCriticalErrors,
   waitForVSCodeWorkbench,
   ensureSecondarySideBarHidden
 } from '@salesforce/playwright-vscode-ext';
@@ -25,7 +24,6 @@ import { SERVICES_CHANNEL_NAME } from '../../../src/constants';
 
 test.beforeEach(async ({ page }) => {
   await waitForVSCodeWorkbench(page);
-  await assertWelcomeTabExists(page);
   await closeWelcomeTabs(page);
   await ensureSecondarySideBarHidden(page);
 });
@@ -50,11 +48,5 @@ test('handles empty retrieveOnLoad setting gracefully', async ({ page }) => {
     expect(hasRetrieving, 'Should not attempt retrieval with empty setting').toBe(false);
   });
 
-  await test.step('validate no errors from empty setting', async () => {
-    const criticalConsole = filterErrors(consoleErrors);
-    expect(
-      criticalConsole,
-      `Console errors: ${criticalConsole.map((e: { text: string }) => e.text).join(' | ')}`
-    ).toHaveLength(0);
-  });
+  await validateNoCriticalErrors(test, consoleErrors);
 });

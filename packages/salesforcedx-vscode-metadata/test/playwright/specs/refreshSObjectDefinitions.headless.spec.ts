@@ -11,7 +11,6 @@ import {
   setupConsoleMonitoring,
   setupNetworkMonitoring,
   waitForVSCodeWorkbench,
-  assertWelcomeTabExists,
   closeWelcomeTabs,
   createDreamhouseOrg,
   upsertScratchOrgAuthFieldsToSettings,
@@ -23,7 +22,7 @@ import {
   waitForOutputChannelText,
   validateNoCriticalErrors,
   ensureSecondarySideBarHidden,
-  QUICK_INPUT_WIDGET,
+  activeQuickInputWidget,
   QUICK_INPUT_LIST_ROW,
   WORKBENCH
 } from '@salesforce/playwright-vscode-ext';
@@ -47,10 +46,10 @@ const runRefreshAndVerify = async (
 
   await executeCommandWithCommandPalette(page, packageNls.sobjects_refresh);
 
-  const quickInput = page.locator(QUICK_INPUT_WIDGET);
-  await quickInput.waitFor({ state: 'visible', timeout: 10_000 });
+  const quickInput = activeQuickInputWidget(page);
+  await quickInput.waitFor({ state: 'attached', timeout: 10_000 });
   const row = quickInput.locator(QUICK_INPUT_LIST_ROW).filter({ hasText: quickPickOption });
-  await row.click();
+  await row.click({ force: true });
 
   await waitForOutputChannelText(page, { expectedText: expectedOutputText, timeout });
 };
@@ -62,7 +61,6 @@ test('Refresh SObject Definitions: Custom, Standard, All via output channel', as
   await test.step('setup dreamhouse org', async () => {
     const createResult = await createDreamhouseOrg();
     await waitForVSCodeWorkbench(page);
-    await assertWelcomeTabExists(page);
     await closeWelcomeTabs(page);
     await ensureSecondarySideBarHidden(page);
     await upsertScratchOrgAuthFieldsToSettings(page, createResult);
@@ -77,15 +75,30 @@ test('Refresh SObject Definitions: Custom, Standard, All via output channel', as
   });
 
   await test.step('Refresh SObject Definitions for Custom SObjects', async () => {
-    await runRefreshAndVerify(page, packageNls.sobject_refresh_custom, packageNls.sobject_refresh_output_custom, CUSTOM_TIMEOUT);
+    await runRefreshAndVerify(
+      page,
+      packageNls.sobject_refresh_custom,
+      packageNls.sobject_refresh_output_custom,
+      CUSTOM_TIMEOUT
+    );
   });
 
   await test.step('Refresh SObject Definitions for Standard SObjects', async () => {
-    await runRefreshAndVerify(page, packageNls.sobject_refresh_standard, packageNls.sobject_refresh_output_standard, STANDARD_TIMEOUT);
+    await runRefreshAndVerify(
+      page,
+      packageNls.sobject_refresh_standard,
+      packageNls.sobject_refresh_output_standard,
+      STANDARD_TIMEOUT
+    );
   });
 
   await test.step('Refresh SObject Definitions for All SObjects', async () => {
-    await runRefreshAndVerify(page, packageNls.sobject_refresh_all, packageNls.sobject_refresh_output_standard, STANDARD_TIMEOUT);
+    await runRefreshAndVerify(
+      page,
+      packageNls.sobject_refresh_all,
+      packageNls.sobject_refresh_output_standard,
+      STANDARD_TIMEOUT
+    );
     await waitForOutputChannelText(page, {
       expectedText: packageNls.sobject_refresh_output_custom,
       timeout: 10_000

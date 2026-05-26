@@ -18,8 +18,6 @@ import { nls } from '../messages';
 import { type LogCollectorState, LogCollectorStateRef, CurrentTraceFlags } from '../services/apexLogState';
 import { getExecAnonLogIds, saveLog } from './logStorage';
 
-export type { LogCollectorState } from '../services/apexLogState';
-
 const toDate = (d: Date | string): Date => (d instanceof Date ? d : new Date(d));
 
 const isAfterTraceFlagStart =
@@ -33,10 +31,10 @@ const isAfterTraceFlagStart =
     return userStart === undefined || st >= userStart;
   };
 
-const collectNewLogs = Effect.fn('LogAutoCollect.collectNewLogs')(function* (
-  knownIdsRef: Ref.Ref<Set<string>>,
-  collectorRef: SubscriptionRef.SubscriptionRef<LogCollectorState>
-) {
+const collectNewLogs = Effect.fn('LogAutoCollect.collectNewLogs', {
+  root: true,
+  attributes: { telemetryIgnore: true }
+})(function* (knownIdsRef: Ref.Ref<Set<string>>, collectorRef: SubscriptionRef.SubscriptionRef<LogCollectorState>) {
   const api = yield* (yield* ExtensionProviderService).getServicesApi;
   const knownIds = yield* Ref.get(knownIdsRef);
 
@@ -112,12 +110,12 @@ export const createLogAutoCollect = Effect.fn('ApexLog.createLogAutoCollect')(fu
   const knownIdsRef = yield* Ref.make(new Set<string>());
   const targetOrgRef = yield* api.services.TargetOrgRef();
 
-  const settingsWatcher = yield* api.services.SettingsWatcherService;
+  const settingsChangePubSub = yield* api.services.SettingsChangePubSub;
   const pollIntervalRef = yield* SubscriptionRef.make(Duration.seconds(getPollIntervalSeconds()));
 
   // watch the setting to update poll freq
   yield* Effect.fork(
-    Stream.fromPubSub(settingsWatcher.pubsub).pipe(
+    Stream.fromPubSub(settingsChangePubSub).pipe(
       Stream.filter(event => event.affectsConfiguration('salesforcedx-vscode-apex-log.logPollIntervalSeconds')),
       Stream.runForEach(() => SubscriptionRef.set(pollIntervalRef, Duration.seconds(getPollIntervalSeconds())))
     )
@@ -125,7 +123,7 @@ export const createLogAutoCollect = Effect.fn('ApexLog.createLogAutoCollect')(fu
 
   // when the org changes, clear the knownIds
   yield* Effect.fork(
-    Stream.concat(Stream.fromEffect(SubscriptionRef.get(targetOrgRef)), targetOrgRef.changes).pipe(
+    targetOrgRef.changes.pipe(
       Stream.map(orgInfo => orgInfo.orgId),
       Stream.changes,
       Stream.as(undefined),
@@ -133,10 +131,7 @@ export const createLogAutoCollect = Effect.fn('ApexLog.createLogAutoCollect')(fu
     )
   );
 
-  const dynamicPollStream = Stream.concat(
-    Stream.make(yield* SubscriptionRef.get(pollIntervalRef)),
-    pollIntervalRef.changes
-  ).pipe(
+  const dynamicPollStream = pollIntervalRef.changes.pipe(
     Stream.filter(d => Duration.greaterThan(d, Duration.zero)), // 0 means don't poll
     Stream.flatMap(
       interval => Stream.fromSchedule(Schedule.spaced(interval)).pipe(Stream.filter(() => vscode.window.state.active)),
@@ -148,10 +143,7 @@ export const createLogAutoCollect = Effect.fn('ApexLog.createLogAutoCollect')(fu
   const refreshStream = traceFlagRefreshRef.changes.pipe(Stream.as(undefined));
   // When org becomes ready, status bar fetches trace flags and sets the ref. LogAutoCollect must also
   // react to org changes so it doesn't miss the initial ref update (race on workspace reload).
-  const orgChangeStream = Stream.concat(
-    Stream.fromEffect(SubscriptionRef.get(targetOrgRef)),
-    targetOrgRef.changes
-  ).pipe(
+  const orgChangeStream = targetOrgRef.changes.pipe(
     Stream.map(orgInfo => orgInfo.orgId),
     Stream.changes,
     Stream.as(undefined)

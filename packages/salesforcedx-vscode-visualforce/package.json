@@ -1,5 +1,6 @@
 {
   "name": "salesforcedx-vscode-visualforce",
+  "private": true,
   "displayName": "Visualforce",
   "description": "Provides syntax highlighting for the Visualforce framework",
   "qna": "https://github.com/forcedotcom/salesforcedx-vscode/issues",
@@ -14,7 +15,7 @@
     "color": "#ECECEC",
     "theme": "light"
   },
-  "version": "66.4.2",
+  "version": "66.13.0",
   "publisher": "salesforce",
   "o11yUploadEndpoint": "https://794testsite.my.site.com/byolwr/webruntime/log/metrics",
   "enableO11y": "true",
@@ -27,54 +28,64 @@
     "Programming Languages"
   ],
   "dependencies": {
+    "@salesforce/effect-ext-utils": "*",
+    "@salesforce/vscode-i18n": "*",
+    "effect": "^3.20.0",
     "vscode-css-languageservice": "^6.3.7",
     "vscode-languageclient": "^9.0.1",
-    "vscode-languageserver-protocol": "^3.17.5"
+    "vscode-languageserver-protocol": "^3.17.5",
+    "vscode-uri": "^3.1.0"
   },
   "devDependencies": {
+    "@salesforce/playwright-vscode-ext": "*",
     "@salesforce/salesforcedx-visualforce-language-server": "*",
     "@salesforce/salesforcedx-visualforce-markup-language-server": "*",
-    "salesforcedx-vscode-core": "*"
+    "salesforcedx-vscode-services": "*"
   },
   "extensionDependencies": [
-    "salesforce.salesforcedx-vscode-core"
+    "salesforce.salesforcedx-vscode-services"
   ],
   "scripts": {
+    "preinstall": "node ../../scripts/require-root-install.js",
     "vscode:bundle": "wireit",
     "clean": "shx rm -rf node_modules out dist coverage .nyc_output .wireit .eslintcache *.vsix",
     "compile": "wireit",
     "lint": "wireit",
     "test": "wireit",
+    "test:compile": "wireit",
+    "test:desktop": "wireit",
+    "test:desktop:debug": "npm run test:desktop -- --debug",
     "vscode:package": "wireit",
     "vscode:publish": "node ../../scripts/publish-vsix.js",
     "vscode:sha256": "node ../../scripts/generate-sha256.js >> ../../SHA256"
   },
   "wireit": {
     "compile": {
-      "command": "tsc --build --pretty",
+      "command": "tsc --pretty",
       "clean": "if-file-deleted",
       "dependencies": [
         "../salesforcedx-visualforce-language-server:compile",
         "../salesforcedx-visualforce-markup-language-server:compile",
-        "../salesforcedx-vscode-core:compile"
+        "../salesforcedx-vscode-services:compile",
+        "../effect-ext-utils:compile",
+        "../salesforcedx-vscode-i18n:compile"
       ],
       "files": [
         "src/**/*.ts",
-        "test/**/*.ts",
         "tsconfig.json",
         "../../tsconfig.common.json",
         "package.json",
         "package.nls*.json"
       ],
       "output": [
-        "out/**",
-        "tsconfig.tsbuildinfo"
+        "out/**"
       ]
     },
     "vscode:bundle": {
       "command": "node ./esbuild.config.mjs",
       "dependencies": [
-        "compile"
+        "compile",
+        "../salesforcedx-vscode-services:vscode:bundle"
       ],
       "files": [
         "esbuild.config.mjs",
@@ -86,9 +97,9 @@
       ]
     },
     "test": {
-      "command": "jest --coverage --passWithNoTests",
+      "command": "jest --passWithNoTests",
       "dependencies": [
-        "compile"
+        "test:compile"
       ],
       "files": [
         "src/**/*.ts",
@@ -103,7 +114,8 @@
     "lint": {
       "command": "eslint --color --cache --cache-location .eslintcache .",
       "dependencies": [
-        "../eslint-local-rules:compile"
+        "../eslint-local-rules:compile",
+        "compile"
       ],
       "files": [
         "src/**/*.ts",
@@ -111,6 +123,40 @@
         "../../eslint.config.mjs",
         "package.json",
         "package.nls.json"
+      ],
+      "output": []
+    },
+    "test:desktop": {
+      "command": "playwright test --config=test/playwright/playwright.config.desktop.ts",
+      "env": {
+        "VSCODE_DESKTOP": "1",
+        "E2E_FROM_VSIX": {
+          "external": true
+        },
+        "PLAYWRIGHT_WORKERS": {
+          "external": true
+        }
+      },
+      "dependencies": [
+        "vscode:package",
+        "../salesforcedx-vscode-services:vscode:package",
+        "../playwright-vscode-ext:compile"
+      ],
+      "files": [
+        "test/playwright/**/*.ts",
+        "package*.json"
+      ],
+      "output": []
+    },
+    "test:compile": {
+      "command": "tsc -p test/tsconfig.json",
+      "dependencies": [
+        "compile",
+        "../playwright-vscode-ext:compile"
+      ],
+      "files": [
+        "test/**/*.ts",
+        "test/tsconfig.json"
       ],
       "output": []
     },
@@ -135,6 +181,38 @@
   },
   "main": "./dist/index.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "sf.visualforce.generate.component",
+        "title": "%visualforce_generate_component_text%"
+      },
+      {
+        "command": "sf.visualforce.generate.page",
+        "title": "%visualforce_generate_page_text%"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "sf.visualforce.generate.component",
+          "when": "sf:project_opened"
+        },
+        {
+          "command": "sf.visualforce.generate.page",
+          "when": "sf:project_opened"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "sf.visualforce.generate.component",
+          "when": "explorerResourceIsFolder && resourceFilename == components && sf:project_opened"
+        },
+        {
+          "command": "sf.visualforce.generate.page",
+          "when": "explorerResourceIsFolder && resourceFilename == pages && sf:project_opened"
+        }
+      ]
+    },
     "languages": [
       {
         "id": "visualforce",

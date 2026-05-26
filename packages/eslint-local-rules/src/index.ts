@@ -12,6 +12,7 @@ import { noDuplicatePlaywrightLocators } from './noDuplicatePlaywrightLocators';
 import { noEffectFnWrapper } from './noEffectFnWrapper';
 import { noEffectServiceAccessorCalls } from './noEffectServiceAccessorCalls';
 import { noExplicitEffectReturnType } from './noExplicitEffectReturnType';
+import { noExportTaggedErrorInServices } from './noExportTaggedErrorInServices';
 import { noUnusedI18nMessages } from './noUnusedI18nMessages';
 import { noVscodeMessageLiterals } from './noVscodeMessageLiterals';
 import { noVscodeProgressTitleLiterals } from './noVscodeProgressTitleLiterals';
@@ -22,8 +23,11 @@ import { packageJsonCommandRefs } from './packageJsonCommandRefs';
 import { packageJsonExtensionIcon } from './packageJsonExtensionIcon';
 import { packageJsonI18nDescriptions } from './packageJsonI18nDescriptions';
 import { packageJsonIconPaths } from './packageJsonIconPaths';
+import { packageJsonNoDefaultTrue } from './packageJsonNoDefaultTrue';
+import { packageJsonRequireRootInstall } from './packageJsonRequireRootInstall';
 import { packageJsonSalesforceDepVersions } from './packageJsonSalesforceDepVersions';
 import { packageJsonViewRefs } from './packageJsonViewRefs';
+import { queryBuilderHtmlI18nKeys } from './queryBuilderHtmlI18nKeys';
 import { requireEffectFnSpanName } from './requireEffectFnSpanName';
 import { vscodeignoreContributesConflict } from './vscodeignoreContributesConflict';
 import { vscodeignoreRequiredPatterns } from './vscodeignoreRequiredPatterns';
@@ -39,10 +43,12 @@ const plugin = {
     'no-duplicate-playwright-locators': noDuplicatePlaywrightLocators,
     'no-direct-services-imports': noDirectServicesImports,
     'no-effect-fn-wrapper': noEffectFnWrapper,
+    'no-export-tagged-error-in-services': noExportTaggedErrorInServices,
     'require-effect-fn-span-name': requireEffectFnSpanName,
     'no-effect-service-accessor-calls': noEffectServiceAccessorCalls,
     'no-explicit-effect-return-type': noExplicitEffectReturnType,
     'no-unused-i18n-messages': noUnusedI18nMessages,
+    'query-builder-html-i18n-keys': queryBuilderHtmlI18nKeys,
     'no-vscode-message-literals': noVscodeMessageLiterals,
     'no-vscode-progress-title-literals': noVscodeProgressTitleLiterals,
     'no-vscode-quickpick-description-literals': noVscodeQuickpickDescriptionLiterals,
@@ -52,6 +58,8 @@ const plugin = {
     'package-json-extension-icon': packageJsonExtensionIcon,
     'package-json-icon-paths': packageJsonIconPaths,
     'package-json-command-refs': packageJsonCommandRefs,
+    'package-json-no-default-true': packageJsonNoDefaultTrue,
+    'package-json-require-root-install': packageJsonRequireRootInstall,
     'package-json-salesforce-dep-versions': packageJsonSalesforceDepVersions,
     'package-json-view-refs': packageJsonViewRefs,
     'vscodeignore-contributes-conflict': vscodeignoreContributesConflict,

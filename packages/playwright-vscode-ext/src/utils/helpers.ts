@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, salesforce.com, inc.
+ * Copyright (c) 2026, salesforce.com, inc.
  * All rights reserved.
  * Licensed under the BSD 3-Clause license.
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
@@ -93,7 +93,12 @@ const NON_CRITICAL_ERROR_PATTERNS: readonly string[] = [
   'Sign-in failed',
   'Channel is closed',
   'GenOpAgentConfig', // VS Code 1.119+ registry warning for unreleased agent config type (non-critical)
-  'DEP0005' // Node.js Buffer() deprecation warning from transitive dependencies (non-critical)
+  'DEP0005', // Node.js Buffer() deprecation warning from transitive dependencies (non-critical)
+  // VS Code 1.119+ web: workbench tries to instantiate agentHostSandboxForwarder which requires a
+  // remote connection that doesn't exist in @vscode/test-web. Tracked upstream:
+  // https://github.com/microsoft/vscode/issues/318222
+  'agentHostSandboxForwarder',
+  'Remote agent host is not enabled'
 ] as const;
 
 const NON_CRITICAL_NETWORK_PATTERNS: readonly string[] = [

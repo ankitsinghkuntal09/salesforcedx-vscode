@@ -28,7 +28,7 @@
         "Field Type": "string"
       },
       {
-        "Description": "Required. Indicates if ActivationPlatform is enabled (true) or not (false). The default is false.",
+        "Description": "Required. Indicates whether the ActivationPlatform is enabled (true) or not (false). The default is false.",
         "Field Name": "enabled",
         "Field Type": "boolean"
       },
@@ -58,7 +58,7 @@
         "Field Type": "ActivationPlatformFileOutputFormat (enumeration of type string)"
       },
       {
-        "Description": "Required. The grouping of the output.Valid values are: PER_ACCOUNT PER_SEGMENT",
+        "Description": "Required. The grouping of the output.Valid values are: PER_ACCOUNT PER_SEGMENT PER_USER",
         "Field Name": "outputGrouping",
         "Field Type": "ActivationPlatformFileOutputGrouping (enumeration of type string)"
       },
@@ -1019,17 +1019,17 @@
   "DataSrcDataModelFieldMap": {
     "fields": [
       {
-        "Description": "Indicates whether a filter is applied to a DLO-to-DMO field mapping (true) or not (false). Available in API version 60.0 and later.",
+        "Description": "Indicates whether a filter is applied to a DLO-to-DMO field mapping (true) or not (false). This field corresponds to whether a DLO filter is applied in the Data Spaces tab in the UI. Available in API version 60.0 and later.",
         "Field Name": "filterApplied",
         "Field Type": "boolean"
       },
       {
-        "Description": "Required when filterApplied is true. The comparison operator used when filtering the DLO-to-DMO field mapping. Available in API version 60.0 and later.",
+        "Description": "Required when filterApplied is true. The comparison operator used when filtering the DLO-to-DMO field mapping. This field corresponds to the operation type of a DLO filter applied in the Data Spaces tab in the UI. Available in API version 60.0 and later.",
         "Field Name": "filterOperationType",
         "Field Type": "string"
       },
       {
-        "Description": "Required when filterApplied is true. The value used for filtering the DLO-to-DMO field mapping. Available in API version 60.0 and later.",
+        "Description": "Required when filterApplied is true. The value used for filtering the DLO-to-DMO field mapping. This field corresponds to the value of a DLO filter applied in the Data Spaces tab in the UI. Available in API version 60.0 and later.",
         "Field Name": "filterValue",
         "Field Type": "string"
       },
@@ -1719,7 +1719,7 @@
   "MarketSegmentDefinition": {
     "fields": [
       {
-        "Description": "An XML clob to hold name value pairs for storing additional metadata. Not applicable for DBT type segment.",
+        "Description": "An XML CLOB to hold name-value pairs for storing additional metadata. Not applicable for DBT type segment.",
         "Field Name": "additionalMetadata",
         "Field Type": "string"
       },
@@ -1734,17 +1734,17 @@
         "Field Type": "string"
       },
       {
-        "Description": "Required. Display name of the field value.",
+        "Description": "Required. Specifies the display name of the field value.",
         "Field Name": "masterLabel",
         "Field Type": "string"
       },
       {
-        "Description": "Required when segmentType is UI. Points to relevant MktDataModelObject entity instance. Must be a valid developerName for an MktDataModelObject instance of Profile type.",
+        "Description": "Required when segmentType is UI. Points to relevant MktDataModelObject entity instance. A valid developerName for an MktDataModelObject instance of Profile type.",
         "Field Name": "segmentOn",
         "Field Type": "string"
       },
       {
-        "Description": "Required. Type of the segment to be created. Only DBT is supported via API. Values are: DBT Lookalike UI EinsteinGPTSegmentsUI",
+        "Description": "Required. Specifies the type of the segment to be created. Only DBT is supported via API. Values are: DBT Dynamic Lookalike UI EinsteinGPTSegmentsUI",
         "Field Name": "segmentType",
         "Field Type": "MarketSegmentType (enumeration of type string)"
       }
@@ -6053,6 +6053,11 @@
         "Field Type": "BatchCalcJobCustomNode[]"
       },
       {
+        "Description": "Specifies the currency conversion type for the data processing engine definition.Available in API version 67.0 and later.",
+        "Field Name": "currencyConversion",
+        "Field Type": "string"
+      },
+      {
         "Description": "Stores the Data Space API Name from Data 360. Available in API version 60.0 and later.",
         "Field Name": "dataSpaceApiName",
         "Field Type": "string"
@@ -6131,6 +6136,11 @@
         "Description": "Status of a data processing engine definition. Valid values are: Active Inactive",
         "Field Name": "status",
         "Field Type": "BatchJobDefinition​Status (enumeration of type string)"
+      },
+      {
+        "Description": "ISO code of the target currency for currency conversion in the data processing engine definition.Available in API version 67.0 and later.",
+        "Field Name": "targetCurrencyIsoCode",
+        "Field Type": "string"
       },
       {
         "Description": "Collection of data transformation nodes in a data processing engine.",
@@ -6373,6 +6383,12 @@
   "BatchCalcJob​DatasourceField": {
     "fields": [],
     "short_description": "Represents a collection of fields relating to a source object field that are selected in the data source node of a data processing engine.",
+    "url": "https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_batchcalcjobdefinition.htm",
+    "parent": "Metadata"
+  },
+  "BatchCalcJobHierarchyPath​AggregateField": {
+    "fields": [],
+    "short_description": "Represents a collection of fields relating to an aggregation field in a hierarchy path node of a data processing engine.",
     "url": "https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_batchcalcjobdefinition.htm",
     "parent": "Metadata"
   },
@@ -16297,7 +16313,7 @@
         "Field Type": "DecisionTableDownloadStatus (enumeration of type string)"
       },
       {
-        "Description": "Indicates the backing storage for the Decision Table. Valid values are: Dmo Hbase Hbpo Solr Soql Execution type of Hbase must be passed in all caps (HBASE) in POST and PATCH calls.",
+        "Description": "Indicates the backing storage for the Decision Table. Valid values are: DLO—Available in API version 67.0 and later. Replaces DMO. HBASE HBPO SOLR SOQL",
         "Field Name": "executionType",
         "Field Type": "DecisionTableExecutionType (enumeration of type string)"
       },
@@ -16332,7 +16348,7 @@
         "Field Type": "string"
       },
       {
-        "Description": "Specifies the refresh status of the cached data in the decision table.Valid values are: Completed Failed InProgress Initiated",
+        "Description": "Specifies the refresh status of the cached data in the decision table.Valid values are: Completed CompletedWithWarnings—Available in API version 67.0 and later. Failed InProgress Initiated",
         "Field Name": "refreshStatus",
         "Field Type": "DecisionTableRefreshStatus (enumeration of type string)"
       },
@@ -20209,7 +20225,7 @@
         "Field Type": "string"
       },
       {
-        "Description": "The process type that uses the expression set rule. Valid values are: Bre GpaCalculation InsuranceClaimProcessing—Available in API version 65.0 and later. ItServiceManagement—Available in API version 65.0 and later. PlanCostCalculation RatingDiscovery StudentInformationSystem—Available in API version 65.0 and later. StudentSuccess When Business Rules Engine is enabled for a Salesforce instance, the default value is Bre. Other process types are available to you depending on your industry solution and permission sets.",
+        "Description": "The process type that uses the expression set rule. Valid values are: AssetRefreshEligibility—Available in API version 67.0 and later. Bre GpaCalculation InsuranceClaimProcessing—Available in API version 65.0 and later. ItServiceManagement—Available in API version 65.0 and later. PlanCostCalculation Program—Available in API version 67.0 and later. RatingDiscovery StockRotation—Available in API version 67.0 and later. StudentInformationSystem—Available in API version 65.0 and later. StudentSuccess When Business Rules Engine is enabled for a Salesforce instance, the default value is Bre. Other process types are available to you depending on your industry solution and permission sets.",
         "Field Name": "processType",
         "Field Type": "ExpsSetProcessType (enumeration of type string)"
       },
@@ -26234,8 +26250,61 @@
     "parent": "Metadata"
   },
   "FlowValueMap": {
-    "fields": [],
-    "short_description": "Reserved for future use.",
+    "fields": [
+      {
+        "Description": "Specifies the default target value used when no source value is found in the value map. A value is required if the defaultValueStrategy field is set to FixedValue.",
+        "Field Name": "defaultValue",
+        "Field Type": "text"
+      },
+      {
+        "Description": "Required. Specifies the strategy used to apply the default target value if the source value is not found in the value map. Valid values are: PassThrough: Pass the original source value through if no mapping is found. FixedValue: Use the defined DefaultValue if no mapping is found. FailFlow: Fail the flow if no mapping is found.",
+        "Field Name": "defaultValueStrategy",
+        "Field Type": "FlowValueMapDefaultStrategy (enumeration of type string)"
+      },
+      {
+        "Description": "User-provided description for the value map.",
+        "Field Name": "description",
+        "Field Type": "text"
+      },
+      {
+        "Description": "Required. Label for the value map.",
+        "Field Name": "label",
+        "Field Type": "text"
+      },
+      {
+        "Description": "Required. Specifies the supported data types for value map source data. Valid types are: Boolean Date DateTime Number String",
+        "Field Name": "sourceType",
+        "Field Type": "FlowValueMapDataType (enumeration of type string)"
+      },
+      {
+        "Description": "Required. Specifies the supported data types for value map target data. Valid types are: Boolean Date DateTime Number String",
+        "Field Name": "targetType",
+        "Field Type": "FlowValueMapDataType (enumeration of type string)"
+      },
+      {
+        "Description": "List of source-target mappings in the value map.",
+        "Field Name": "valueMapEntries",
+        "Field Type": "FlowValueMapEntry[]"
+      }
+    ],
+    "short_description": "Represents the metadata associated with creating a reusable entity for defining and managing mappings between source and target values used within a flow.",
+    "url": "https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_flowvaluemap.htm",
+    "parent": "Metadata"
+  },
+  "FlowValueMapEntry": {
+    "fields": [
+      {
+        "Description": "Required. Specifies the source value in this FlowValueMap definition.",
+        "Field Name": "sourceValue",
+        "Field Type": "text"
+      },
+      {
+        "Description": "Required. Specifies the target value in this FlowValueMap definition.",
+        "Field Name": "targetValue",
+        "Field Type": "text"
+      }
+    ],
+    "short_description": "Stores an individual record linking a specific source value to a target value. This entity maintains a relationship to its parent FlowValueMap definition and makes sure that each sourceValue is unique within that parent definition.",
     "url": "https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_flowvaluemap.htm",
     "parent": "Metadata"
   },
@@ -48973,6 +49042,11 @@
       {
         "Description": "Indicates what happens to a user's UI sessions when an admin resets that user's password. If true, all of the user's UI sessions are terminated. If false, no UI sessions are terminated.",
         "Field Name": "terminateUserSessionsWhenAdminResetsPassword",
+        "Field Type": "boolean"
+      },
+      {
+        "Description": "Indicates whether to disable HTML sanitization when using the aura:unescapedHtml component.Available in API version 67.0 and later.",
+        "Field Name": "unescapedHtmlSanitization",
         "Field Type": "boolean"
       },
       {

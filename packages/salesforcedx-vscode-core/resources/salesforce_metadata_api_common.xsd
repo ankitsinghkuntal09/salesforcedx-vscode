@@ -3,8 +3,8 @@
 Salesforce Metadata Types XSD - Generated from metadata documentation
 This file contains all metadata type definitions for hover documentation and IDE support.
 
-Generated on: 2026-06-07T13:41:17.879Z
-Total metadata types: 1572
+Generated on: 2026-06-14T15:15:17.632Z
+Total metadata types: 1574
 -->
 <xsd:schema
  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -2583,7 +2583,7 @@ Total metadata types: 1572
      </xsd:element>
      <xsd:element name="enabled" minOccurs="0" maxOccurs="unbounded" type="xsd:boolean">
       <xsd:annotation>
-       <xsd:documentation>Required. Indicates if ActivationPlatform is enabled (true) or not (false). The default is false.</xsd:documentation>
+       <xsd:documentation>Required. Indicates whether the ActivationPlatform is enabled (true) or not (false). The default is false.</xsd:documentation>
        <xsd:appinfo>Type: boolean</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
@@ -2619,7 +2619,7 @@ Total metadata types: 1572
      </xsd:element>
      <xsd:element name="outputGrouping" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
       <xsd:annotation>
-       <xsd:documentation>Required. The grouping of the output.Valid values are: PER_ACCOUNT PER_SEGMENT</xsd:documentation>
+       <xsd:documentation>Required. The grouping of the output.Valid values are: PER_ACCOUNT PER_SEGMENT PER_USER</xsd:documentation>
        <xsd:appinfo>Type: ActivationPlatformFileOutputGrouping (enumeration of type string)</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
@@ -8439,6 +8439,12 @@ Total metadata types: 1572
        <xsd:appinfo>Type: BatchCalcJobCustomNode[]</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
+     <xsd:element name="currencyConversion" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
+      <xsd:annotation>
+       <xsd:documentation>Specifies the currency conversion type for the data processing engine definition.Available in API version 67.0 and later.</xsd:documentation>
+       <xsd:appinfo>Type: string</xsd:appinfo>
+      </xsd:annotation>
+     </xsd:element>
      <xsd:element name="dataSpaceApiName" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
       <xsd:annotation>
        <xsd:documentation>Stores the Data Space API Name from Data 360. Available in API version 60.0 and later.</xsd:documentation>
@@ -8535,6 +8541,12 @@ Total metadata types: 1572
        <xsd:appinfo>Type: BatchJobDefinitionStatus (enumeration of type string)</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
+     <xsd:element name="targetCurrencyIsoCode" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
+      <xsd:annotation>
+       <xsd:documentation>ISO code of the target currency for currency conversion in the data processing engine definition.Available in API version 67.0 and later.</xsd:documentation>
+       <xsd:appinfo>Type: string</xsd:appinfo>
+      </xsd:annotation>
+     </xsd:element>
      <xsd:element name="transforms" minOccurs="0" maxOccurs="unbounded" type="BatchCalcJobTransform">
       <xsd:annotation>
        <xsd:documentation>Collection of data transformation nodes in a data processing engine.</xsd:documentation>
@@ -8619,6 +8631,19 @@ Total metadata types: 1572
  <xsd:complexType name="BatchCalcJobHierarchyPath">
   <xsd:annotation>
    <xsd:documentation>Represents a collection of hierarchy path nodes in a data processing engine definition.</xsd:documentation>
+   <xsd:appinfo>Documentation: https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_batchcalcjobdefinition.htm</xsd:appinfo>
+  </xsd:annotation>
+  <xsd:complexContent>
+   <xsd:extension base="Metadata">
+    <xsd:choice>
+     <xsd:any minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
+    </xsd:choice>
+   </xsd:extension>
+  </xsd:complexContent>
+ </xsd:complexType>
+ <xsd:complexType name="BatchCalcJobHierarchyPathAggregateField">
+  <xsd:annotation>
+   <xsd:documentation>Represents a collection of fields relating to an aggregation field in a hierarchy path node of a data processing engine.</xsd:documentation>
    <xsd:appinfo>Documentation: https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_batchcalcjobdefinition.htm</xsd:appinfo>
   </xsd:annotation>
   <xsd:complexContent>
@@ -23547,19 +23572,19 @@ Total metadata types: 1572
     <xsd:choice maxOccurs="unbounded">
      <xsd:element name="filterApplied" minOccurs="0" maxOccurs="unbounded" type="xsd:boolean">
       <xsd:annotation>
-       <xsd:documentation>Indicates whether a filter is applied to a DLO-to-DMO field mapping (true) or not (false). Available in API version 60.0 and later.</xsd:documentation>
+       <xsd:documentation>Indicates whether a filter is applied to a DLO-to-DMO field mapping (true) or not (false). This field corresponds to whether a DLO filter is applied in the Data Spaces tab in the UI. Available in API version 60.0 and later.</xsd:documentation>
        <xsd:appinfo>Type: boolean</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
      <xsd:element name="filterOperationType" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
       <xsd:annotation>
-       <xsd:documentation>Required when filterApplied is true. The comparison operator used when filtering the DLO-to-DMO field mapping. Available in API version 60.0 and later.</xsd:documentation>
+       <xsd:documentation>Required when filterApplied is true. The comparison operator used when filtering the DLO-to-DMO field mapping. This field corresponds to the operation type of a DLO filter applied in the Data Spaces tab in the UI. Available in API version 60.0 and later.</xsd:documentation>
        <xsd:appinfo>Type: string</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
      <xsd:element name="filterValue" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
       <xsd:annotation>
-       <xsd:documentation>Required when filterApplied is true. The value used for filtering the DLO-to-DMO field mapping. Available in API version 60.0 and later.</xsd:documentation>
+       <xsd:documentation>Required when filterApplied is true. The value used for filtering the DLO-to-DMO field mapping. This field corresponds to the value of a DLO filter applied in the Data Spaces tab in the UI. Available in API version 60.0 and later.</xsd:documentation>
        <xsd:appinfo>Type: string</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
@@ -24118,7 +24143,7 @@ Total metadata types: 1572
      </xsd:element>
      <xsd:element name="executionType" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
       <xsd:annotation>
-       <xsd:documentation>Indicates the backing storage for the Decision Table. Valid values are: Dmo Hbase Hbpo Solr Soql Execution type of Hbase must be passed in all caps (HBASE) in POST and PATCH calls.</xsd:documentation>
+       <xsd:documentation>Indicates the backing storage for the Decision Table. Valid values are: DLO—Available in API version 67.0 and later. Replaces DMO. HBASE HBPO SOLR SOQL</xsd:documentation>
        <xsd:appinfo>Type: DecisionTableExecutionType (enumeration of type string)</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
@@ -24160,7 +24185,7 @@ Total metadata types: 1572
      </xsd:element>
      <xsd:element name="refreshStatus" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
       <xsd:annotation>
-       <xsd:documentation>Specifies the refresh status of the cached data in the decision table.Valid values are: Completed Failed InProgress Initiated</xsd:documentation>
+       <xsd:documentation>Specifies the refresh status of the cached data in the decision table.Valid values are: Completed CompletedWithWarnings—Available in API version 67.0 and later. Failed InProgress Initiated</xsd:documentation>
        <xsd:appinfo>Type: DecisionTableRefreshStatus (enumeration of type string)</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
@@ -30536,7 +30561,7 @@ Total metadata types: 1572
      </xsd:element>
      <xsd:element name="processType" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
       <xsd:annotation>
-       <xsd:documentation>The process type that uses the expression set rule. Valid values are: Bre GpaCalculation InsuranceClaimProcessing—Available in API version 65.0 and later. ItServiceManagement—Available in API version 65.0 and later. PlanCostCalculation RatingDiscovery StudentInformationSystem—Available in API version 65.0 and later. StudentSuccess When Business Rules Engine is enabled for a Salesforce instance, the default value is Bre. Other process types are available to you depending on your industry solution and permission sets.</xsd:documentation>
+       <xsd:documentation>The process type that uses the expression set rule. Valid values are: AssetRefreshEligibility—Available in API version 67.0 and later. Bre GpaCalculation InsuranceClaimProcessing—Available in API version 65.0 and later. ItServiceManagement—Available in API version 65.0 and later. PlanCostCalculation Program—Available in API version 67.0 and later. RatingDiscovery StockRotation—Available in API version 67.0 and later. StudentInformationSystem—Available in API version 65.0 and later. StudentSuccess When Business Rules Engine is enabled for a Salesforce instance, the default value is Bre. Other process types are available to you depending on your industry solution and permission sets.</xsd:documentation>
        <xsd:appinfo>Type: ExpsSetProcessType (enumeration of type string)</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
@@ -40907,12 +40932,79 @@ Total metadata types: 1572
  </xsd:complexType>
  <xsd:complexType name="FlowValueMap">
   <xsd:annotation>
-   <xsd:documentation>Reserved for future use.</xsd:documentation>
+   <xsd:documentation>Represents the metadata associated with creating a reusable entity for defining and managing mappings between source and target values used within a flow.</xsd:documentation>
    <xsd:appinfo>Documentation: https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_flowvaluemap.htm</xsd:appinfo>
   </xsd:annotation>
   <xsd:complexContent>
    <xsd:extension base="Metadata">
-    <xsd:choice>
+    <xsd:choice maxOccurs="unbounded">
+     <xsd:element name="defaultValue" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
+      <xsd:annotation>
+       <xsd:documentation>Specifies the default target value used when no source value is found in the value map. A value is required if the defaultValueStrategy field is set to FixedValue.</xsd:documentation>
+       <xsd:appinfo>Type: text</xsd:appinfo>
+      </xsd:annotation>
+     </xsd:element>
+     <xsd:element name="defaultValueStrategy" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
+      <xsd:annotation>
+       <xsd:documentation>Required. Specifies the strategy used to apply the default target value if the source value is not found in the value map. Valid values are: PassThrough: Pass the original source value through if no mapping is found. FixedValue: Use the defined DefaultValue if no mapping is found. FailFlow: Fail the flow if no mapping is found.</xsd:documentation>
+       <xsd:appinfo>Type: FlowValueMapDefaultStrategy (enumeration of type string)</xsd:appinfo>
+      </xsd:annotation>
+     </xsd:element>
+     <xsd:element name="description" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
+      <xsd:annotation>
+       <xsd:documentation>User-provided description for the value map.</xsd:documentation>
+       <xsd:appinfo>Type: text</xsd:appinfo>
+      </xsd:annotation>
+     </xsd:element>
+     <xsd:element name="label" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
+      <xsd:annotation>
+       <xsd:documentation>Required. Label for the value map.</xsd:documentation>
+       <xsd:appinfo>Type: text</xsd:appinfo>
+      </xsd:annotation>
+     </xsd:element>
+     <xsd:element name="sourceType" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
+      <xsd:annotation>
+       <xsd:documentation>Required. Specifies the supported data types for value map source data. Valid types are: Boolean Date DateTime Number String</xsd:documentation>
+       <xsd:appinfo>Type: FlowValueMapDataType (enumeration of type string)</xsd:appinfo>
+      </xsd:annotation>
+     </xsd:element>
+     <xsd:element name="targetType" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
+      <xsd:annotation>
+       <xsd:documentation>Required. Specifies the supported data types for value map target data. Valid types are: Boolean Date DateTime Number String</xsd:documentation>
+       <xsd:appinfo>Type: FlowValueMapDataType (enumeration of type string)</xsd:appinfo>
+      </xsd:annotation>
+     </xsd:element>
+     <xsd:element name="valueMapEntries" minOccurs="0" maxOccurs="unbounded" type="FlowValueMapEntry">
+      <xsd:annotation>
+       <xsd:documentation>List of source-target mappings in the value map.</xsd:documentation>
+       <xsd:appinfo>Type: FlowValueMapEntry[]</xsd:appinfo>
+      </xsd:annotation>
+     </xsd:element>
+     <xsd:any minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
+    </xsd:choice>
+   </xsd:extension>
+  </xsd:complexContent>
+ </xsd:complexType>
+ <xsd:complexType name="FlowValueMapEntry">
+  <xsd:annotation>
+   <xsd:documentation>Stores an individual record linking a specific source value to a target value. This entity maintains a relationship to its parent FlowValueMap definition and makes sure that each sourceValue is unique within that parent definition.</xsd:documentation>
+   <xsd:appinfo>Documentation: https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_flowvaluemap.htm</xsd:appinfo>
+  </xsd:annotation>
+  <xsd:complexContent>
+   <xsd:extension base="Metadata">
+    <xsd:choice maxOccurs="unbounded">
+     <xsd:element name="sourceValue" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
+      <xsd:annotation>
+       <xsd:documentation>Required. Specifies the source value in this FlowValueMap definition.</xsd:documentation>
+       <xsd:appinfo>Type: text</xsd:appinfo>
+      </xsd:annotation>
+     </xsd:element>
+     <xsd:element name="targetValue" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
+      <xsd:annotation>
+       <xsd:documentation>Required. Specifies the target value in this FlowValueMap definition.</xsd:documentation>
+       <xsd:appinfo>Type: text</xsd:appinfo>
+      </xsd:annotation>
+     </xsd:element>
      <xsd:any minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
     </xsd:choice>
    </xsd:extension>
@@ -49689,7 +49781,7 @@ Total metadata types: 1572
     <xsd:choice maxOccurs="unbounded">
      <xsd:element name="additionalMetadata" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
       <xsd:annotation>
-       <xsd:documentation>An XML clob to hold name value pairs for storing additional metadata. Not applicable for DBT type segment.</xsd:documentation>
+       <xsd:documentation>An XML CLOB to hold name-value pairs for storing additional metadata. Not applicable for DBT type segment.</xsd:documentation>
        <xsd:appinfo>Type: string</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
@@ -49707,19 +49799,19 @@ Total metadata types: 1572
      </xsd:element>
      <xsd:element name="masterLabel" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
       <xsd:annotation>
-       <xsd:documentation>Required. Display name of the field value.</xsd:documentation>
+       <xsd:documentation>Required. Specifies the display name of the field value.</xsd:documentation>
        <xsd:appinfo>Type: string</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
      <xsd:element name="segmentOn" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
       <xsd:annotation>
-       <xsd:documentation>Required when segmentType is UI. Points to relevant MktDataModelObject entity instance. Must be a valid developerName for an MktDataModelObject instance of Profile type.</xsd:documentation>
+       <xsd:documentation>Required when segmentType is UI. Points to relevant MktDataModelObject entity instance. A valid developerName for an MktDataModelObject instance of Profile type.</xsd:documentation>
        <xsd:appinfo>Type: string</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
      <xsd:element name="segmentType" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
       <xsd:annotation>
-       <xsd:documentation>Required. Type of the segment to be created. Only DBT is supported via API. Values are: DBT Lookalike UI EinsteinGPTSegmentsUI</xsd:documentation>
+       <xsd:documentation>Required. Specifies the type of the segment to be created. Only DBT is supported via API. Values are: DBT Dynamic Lookalike UI EinsteinGPTSegmentsUI</xsd:documentation>
        <xsd:appinfo>Type: MarketSegmentType (enumeration of type string)</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
@@ -66004,6 +66096,12 @@ Total metadata types: 1572
        <xsd:appinfo>Type: boolean</xsd:appinfo>
       </xsd:annotation>
      </xsd:element>
+     <xsd:element name="unescapedHtmlSanitization" minOccurs="0" maxOccurs="unbounded" type="xsd:boolean">
+      <xsd:annotation>
+       <xsd:documentation>Indicates whether to disable HTML sanitization when using the aura:unescapedHtml component.Available in API version 67.0 and later.</xsd:documentation>
+       <xsd:appinfo>Type: boolean</xsd:appinfo>
+      </xsd:annotation>
+     </xsd:element>
      <xsd:element name="untrustedRedirect" minOccurs="0" maxOccurs="unbounded" type="xsd:string">
       <xsd:annotation>
        <xsd:documentation>The redirection behavior when a user who accesses Salesforce via Lightning Experience clicks a hyperlink in a URL field with a target URL that isn’t trusted. Valid values are: AlwaysAllowed NeverAllowed WithUserPermission To specify the URLs that you trust, use the RedirectWhitelistUrl Metadata type. Available in API version 64.0 and later. Secure redirections to untrusted URLs in Lightning Experience is a pilot or beta service that is subject to the Beta Services Terms at Agreements - Salesforce.com or a written Unified Pilot Agreement if executed by Customer, and applicable terms in the Product Terms Directory. Use of this pilot or beta service is at the Customer&apos;s sole discretion.</xsd:documentation>
@@ -74812,6 +74910,7 @@ Total metadata types: 1572
  <xsd:element name="BatchCalcJobForecast" type="BatchCalcJobForecast"/>
  <xsd:element name="BatchCalcJobFrcstGrpFld" type="BatchCalcJobFrcstGrpFld"/>
  <xsd:element name="BatchCalcJobHierarchyPath" type="BatchCalcJobHierarchyPath"/>
+ <xsd:element name="BatchCalcJobHierarchyPathAggregateField" type="BatchCalcJobHierarchyPathAggregateField"/>
  <xsd:element name="BatchCalcJobJoinKey" type="BatchCalcJobJoinKey"/>
  <xsd:element name="BatchCalcJobJoinResultField" type="BatchCalcJobJoinResultField"/>
  <xsd:element name="BatchCalcJobOrderByField" type="BatchCalcJobOrderByField"/>
@@ -75464,6 +75563,7 @@ Total metadata types: 1572
  <xsd:element name="FlowTransformValueActionInputParameter" type="FlowTransformValueActionInputParameter"/>
  <xsd:element name="FlowTranslation" type="FlowTranslation"/>
  <xsd:element name="FlowValueMap" type="FlowValueMap"/>
+ <xsd:element name="FlowValueMapEntry" type="FlowValueMapEntry"/>
  <xsd:element name="FlowValueMappingType" type="FlowValueMappingType"/>
  <xsd:element name="FlowVariable" type="FlowVariable"/>
  <xsd:element name="FlowVisibilityRule" type="FlowVisibilityRule"/>
